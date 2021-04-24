@@ -12,6 +12,7 @@ import kr.ac.kpu.game.s2017182016.jumpman.game.MainGame;
 
 public class GameView extends View {
 
+    public static final int MULTIPLIER = 1;
     private long lastFrame;
 
     public static GameView view;

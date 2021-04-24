@@ -5,6 +5,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Rect;
+import android.graphics.RectF;
 
 import kr.ac.kpu.game.s2017182016.jumpman.R;
 import kr.ac.kpu.game.s2017182016.jumpman.framework.GameObject;
@@ -20,6 +21,7 @@ public class Background implements GameObject {
     private static int bgLeft;
     private static int bgRight;
     private static Bitmap bitmap;
+    public Rect dstRect;
 
     public Background(){
         if(bitmap == null)
@@ -35,6 +37,7 @@ public class Background implements GameObject {
 
             bgLeft = w/2 - imageWidth*MAG/2;
             bgRight = w/2 + imageWidth*MAG/2;
+            dstRect = new Rect(bgLeft,0,bgRight,h);
 
         }
     }
@@ -46,6 +49,6 @@ public class Background implements GameObject {
 
     @Override
     public void draw(Canvas canvas) {
-        canvas.drawBitmap(bitmap,null,new Rect(bgLeft,0,bgRight,h),null);
+        canvas.drawBitmap(bitmap,null,dstRect,null);
     }
 }
