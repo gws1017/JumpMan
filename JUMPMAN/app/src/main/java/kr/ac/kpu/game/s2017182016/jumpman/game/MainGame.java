@@ -1,17 +1,20 @@
 package kr.ac.kpu.game.s2017182016.jumpman.game;
 
 import android.graphics.Canvas;
+import android.view.MotionEvent;
 
 import java.util.ArrayList;
 
 import kr.ac.kpu.game.s2017182016.jumpman.framework.GameObject;
 import kr.ac.kpu.game.s2017182016.jumpman.ui.view.GameView;
+import kr.ac.kpu.game.s2017182016.jumpman.ui.view.Joystick;
 
 public class MainGame {
 
     public static MainGame instance;
     public Background bg;
     private Player player;
+    private Joystick joystick;
 
     public static MainGame get(){
         if(instance == null){
@@ -31,9 +34,10 @@ public class MainGame {
         }
 
 
-
+        joystick = new Joystick(400,800,100,50);
         bg = new Background();
         objects.add(bg);
+        objects.add(joystick);
         int w = bg.dstRect.right;//GameView.view.getWidth();//배경이 그려지는위치를 가져오기
         int h = bg.dstRect.bottom;
 
@@ -56,6 +60,26 @@ public class MainGame {
         }
     }
 
+
+    public boolean onTouchEvent(MotionEvent event){
+        switch(event.getAction()){
+            case MotionEvent.ACTION_DOWN:
+                if(joystick.isPressed((double)event.getX(),(double)event.getY())){
+                    joystick.setIsPressed(true);
+                }
+                return true;
+            case MotionEvent.ACTION_MOVE:
+                if(joystick.getIsPressed()){
+                    joystick.setActuator((double)event.getX(),(double)event.getY());
+                }
+                return true;
+            case MotionEvent.ACTION_UP:
+                joystick.setIsPressed(false);
+                joystick.resetActuator();
+                return true;
+        }
+        return false;
+    }
     public void add(GameObject gameObject) {
         GameView.view.post(new Runnable() {
             @Override
