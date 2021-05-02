@@ -99,4 +99,8 @@ public class Joystick implements GameObject {
         actuatorX = 0.0;
         actuatorY = 0.0;
     }
+
+    public double getActuatorX() {
+        return actuatorX;
+    }
 }
