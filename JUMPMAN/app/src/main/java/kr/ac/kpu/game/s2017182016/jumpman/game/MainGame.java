@@ -13,7 +13,7 @@ import kr.ac.kpu.game.s2017182016.jumpman.ui.view.Joystick;
 public class MainGame {
 
     public static MainGame instance;
-    public Background bg;
+    public static Background bg;
     private Player player;
     private Joystick joystick;
 

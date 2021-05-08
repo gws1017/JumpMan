@@ -15,15 +15,20 @@ import kr.ac.kpu.game.s2017182016.jumpman.ui.view.GameView;
 public class Background implements GameObject {
 
     public static final int MAG = 5;
-//    private static int w;
+    //    private static int w;
 //    private static int h;
 //    private static int imageWidth;
 //    private static int imageHeight;
 //    private static int bgLeft;
 //    private static int bgRight;
     private static Bitmap bitmap;
+    private int[] maps= {
+            R.mipmap.bg_1,
+            R.mipmap.bg_2,
+    };
     public Rect srcRect = new Rect();
     public RectF dstRect = new RectF();
+    private int num = 0;
 
     public Background(int resId){
         bitmap = GameBitmap.load(resId);
@@ -33,7 +38,8 @@ public class Background implements GameObject {
         float l = 0;
         float t = 0;
         float b = GameView.view.getHeight();
-        float r = w*b/h*1.5f;
+        float r = GameView.view.getWidth();
+
         dstRect.set(l,t,r,b);
 //        if(bitmap == null)
 //        {
@@ -61,5 +67,21 @@ public class Background implements GameObject {
     @Override
     public void draw(Canvas canvas) {
         canvas.drawBitmap(bitmap,srcRect,dstRect,null);
+    }
+
+    public void nextimg() {
+        this.bitmap = GameBitmap.load(maps[++num]);
+    }
+    public void previmg() {
+        this.bitmap = GameBitmap.load(maps[--num]);
+    }
+    public boolean isLast() {
+        if( num< maps.length -1 ) return true;
+        else return false;
+    }
+
+    public boolean isFirst() {
+        if( num > 0 ) return true;
+        else return false;
     }
 }
