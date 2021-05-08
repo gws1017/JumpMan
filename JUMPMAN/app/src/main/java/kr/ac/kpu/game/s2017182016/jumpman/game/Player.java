@@ -14,10 +14,11 @@ public class Player implements GameObject, BoxCollidable {
 
     private static final float MAX_SPEED = 3.5f;
     private float x;
-    private final float y;
+    private float y;
     private final GameBitmap bitmap;
     private final Joystick joystick;
     private double velocityX;
+    private double velocityY;
 
     Player(float x, float y,Joystick joystick){
         this.x= x;
@@ -28,7 +29,9 @@ public class Player implements GameObject, BoxCollidable {
 
     public void update() {
         velocityX = joystick.getActuatorX()*MAX_SPEED;
+        velocityY = joystick.getActuatorY()*MAX_SPEED;
         x += velocityX;
+        y += velocityY;
     }
 
     @Override

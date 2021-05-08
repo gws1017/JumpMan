@@ -5,6 +5,7 @@ import android.view.MotionEvent;
 
 import java.util.ArrayList;
 
+import kr.ac.kpu.game.s2017182016.jumpman.R;
 import kr.ac.kpu.game.s2017182016.jumpman.framework.GameObject;
 import kr.ac.kpu.game.s2017182016.jumpman.ui.view.GameView;
 import kr.ac.kpu.game.s2017182016.jumpman.ui.view.Joystick;
@@ -35,11 +36,11 @@ public class MainGame {
 
 
         joystick = new Joystick(400,800,100,50);
-        bg = new Background();
+        bg = new Background(R.mipmap.bg_1);
         objects.add(bg);
         objects.add(joystick);
-        int w = bg.dstRect.right;//GameView.view.getWidth();//배경이 그려지는위치를 가져오기
-        int h = bg.dstRect.bottom;
+        int w = GameView.view.getWidth();//GameView.view.getWidth();//배경이 그려지는위치를 가져오기
+        int h = GameView.view.getHeight();
 
         player = new Player(w/2,h-100,joystick);
         objects.add(player);

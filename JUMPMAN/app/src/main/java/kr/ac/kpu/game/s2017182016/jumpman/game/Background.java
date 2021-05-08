@@ -8,38 +8,49 @@ import android.graphics.Rect;
 import android.graphics.RectF;
 
 import kr.ac.kpu.game.s2017182016.jumpman.R;
+import kr.ac.kpu.game.s2017182016.jumpman.framework.GameBitmap;
 import kr.ac.kpu.game.s2017182016.jumpman.framework.GameObject;
 import kr.ac.kpu.game.s2017182016.jumpman.ui.view.GameView;
 
 public class Background implements GameObject {
 
     public static final int MAG = 5;
-    private static int w;
-    private static int h;
-    private static int imageWidth;
-    private static int imageHeight;
-    private static int bgLeft;
-    private static int bgRight;
+//    private static int w;
+//    private static int h;
+//    private static int imageWidth;
+//    private static int imageHeight;
+//    private static int bgLeft;
+//    private static int bgRight;
     private static Bitmap bitmap;
-    public Rect dstRect;
+    public Rect srcRect = new Rect();
+    public RectF dstRect = new RectF();
 
-    public Background(){
-        if(bitmap == null)
-        {
-            Resources res = GameView.view.getResources();
-            bitmap = BitmapFactory.decodeResource(res, R.mipmap.bg_1);
-
-            w = GameView.view.getWidth();
-            h = GameView.view.getHeight();
-
-            imageWidth = bitmap.getWidth();
-            imageHeight = bitmap.getHeight();
-
-            bgLeft = w/2 - imageWidth*MAG/2;
-            bgRight = w/2 + imageWidth*MAG/2;
-            dstRect = new Rect(bgLeft,0,bgRight,h);
-
-        }
+    public Background(int resId){
+        bitmap = GameBitmap.load(resId);
+        int w = bitmap.getWidth();
+        int h = bitmap.getHeight();
+        srcRect.set(0,0,w,h);
+        float l = 0;
+        float t = 0;
+        float b = GameView.view.getHeight();
+        float r = w*b/h*1.5f;
+        dstRect.set(l,t,r,b);
+//        if(bitmap == null)
+//        {
+//            Resources res = GameView.view.getResources();
+//            bitmap = BitmapFactory.decodeResource(res, R.mipmap.bg_1);
+//
+//            w = GameView.view.getWidth();
+//            h = GameView.view.getHeight();
+//
+//            imageWidth = bitmap.getWidth();
+//            imageHeight = bitmap.getHeight();
+//
+//            bgLeft = w/2 - imageWidth*MAG/2;
+//            bgRight = w/2 + imageWidth*MAG/2;
+//            dstRect = new Rect(bgLeft,0,bgRight,h);
+//
+//        }
     }
 
     @Override
@@ -49,6 +60,6 @@ public class Background implements GameObject {
 
     @Override
     public void draw(Canvas canvas) {
-        canvas.drawBitmap(bitmap,null,dstRect,null);
+        canvas.drawBitmap(bitmap,srcRect,dstRect,null);
     }
 }
