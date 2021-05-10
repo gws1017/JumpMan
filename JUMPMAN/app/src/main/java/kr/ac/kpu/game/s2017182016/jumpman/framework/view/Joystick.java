@@ -1,4 +1,4 @@
-package kr.ac.kpu.game.s2017182016.jumpman.ui.view;
+package kr.ac.kpu.game.s2017182016.jumpman.framework.view;
 
 import android.graphics.Canvas;
 import android.graphics.Color;

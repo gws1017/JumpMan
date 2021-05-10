@@ -9,7 +9,7 @@ import android.graphics.RectF;
 
 import java.util.HashMap;
 
-import kr.ac.kpu.game.s2017182016.jumpman.ui.view.GameView;
+import kr.ac.kpu.game.s2017182016.jumpman.framework.view.GameView;
 
 public class GameBitmap {
 

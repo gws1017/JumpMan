@@ -1,4 +1,4 @@
-package kr.ac.kpu.game.s2017182016.jumpman.game;
+package kr.ac.kpu.game.s2017182016.jumpman.framework;
 
 import android.graphics.Canvas;
 import android.view.MotionEvent;
@@ -6,9 +6,9 @@ import android.view.MotionEvent;
 import java.util.ArrayList;
 
 import kr.ac.kpu.game.s2017182016.jumpman.R;
-import kr.ac.kpu.game.s2017182016.jumpman.framework.GameObject;
-import kr.ac.kpu.game.s2017182016.jumpman.ui.view.GameView;
-import kr.ac.kpu.game.s2017182016.jumpman.ui.view.Joystick;
+import kr.ac.kpu.game.s2017182016.jumpman.framework.view.GameView;
+import kr.ac.kpu.game.s2017182016.jumpman.framework.view.Joystick;
+import kr.ac.kpu.game.s2017182016.jumpman.game.Player;
 
 public class MainGame {
 

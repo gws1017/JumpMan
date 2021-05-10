@@ -1,4 +1,4 @@
-package kr.ac.kpu.game.s2017182016.jumpman.ui.view;
+package kr.ac.kpu.game.s2017182016.jumpman.framework.view;
 
 import android.content.Context;
 import android.graphics.Canvas;
@@ -9,11 +9,11 @@ import android.view.View;
 
 import androidx.annotation.Nullable;
 
-import kr.ac.kpu.game.s2017182016.jumpman.game.MainGame;
+import kr.ac.kpu.game.s2017182016.jumpman.framework.MainGame;
 
 public class GameView extends View {
 
-    public static final int MULTIPLIER = 1;
+    public static final int MULTIPLIER = 3;
     private long lastFrame;
 
     public static GameView view;

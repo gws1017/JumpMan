@@ -1,8 +1,6 @@
-package kr.ac.kpu.game.s2017182016.jumpman.game;
+package kr.ac.kpu.game.s2017182016.jumpman.framework;
 
-import android.content.res.Resources;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Rect;
 import android.graphics.RectF;
@@ -10,7 +8,7 @@ import android.graphics.RectF;
 import kr.ac.kpu.game.s2017182016.jumpman.R;
 import kr.ac.kpu.game.s2017182016.jumpman.framework.GameBitmap;
 import kr.ac.kpu.game.s2017182016.jumpman.framework.GameObject;
-import kr.ac.kpu.game.s2017182016.jumpman.ui.view.GameView;
+import kr.ac.kpu.game.s2017182016.jumpman.framework.view.GameView;
 
 public class Background implements GameObject {
 

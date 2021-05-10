@@ -2,16 +2,16 @@ package kr.ac.kpu.game.s2017182016.jumpman.framework;
 
 import android.graphics.Canvas;
 
-import kr.ac.kpu.game.s2017182016.jumpman.ui.view.GameView;
+import kr.ac.kpu.game.s2017182016.jumpman.framework.view.GameView;
 
 public class AnimationGameBitmap extends GameBitmap{
 
 
-    private final long createdOn;
-    private int frameIndex;
-    private float framesPerSecond;
-    private int frameWidth;
-    private int frameCount;
+    protected final long createdOn;
+    protected int frameIndex;
+    protected float framesPerSecond;
+    protected int frameWidth;
+    protected int frameCount;
     private int imageHeight;
     private int imageWidth;
 
