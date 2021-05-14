@@ -20,6 +20,8 @@ public class Player implements GameObject, BoxCollidable {
 
     private static final float MAX_SPEED = 3.5f;
     private static final String TAG = Player.class.getSimpleName();
+    private static final float JUMPPOWER = 1200;
+    private static final float GRAVITY = 2000;
     private final Background bg;
     private float x;
     private float y;
@@ -29,10 +31,18 @@ public class Player implements GameObject, BoxCollidable {
     private double velocityX;
     private double velocityY;
     private int isInverse = 1;
+    private float ground_y;
+
+    private enum State{
+        idle,jump,land
+    }
+
+    private State state = State.idle;
 
     public Player(float x, float y,Joystick joystick){
         this.x= x;
         this.y =y;
+        this.ground_y =y;
         this.bitmap = new IndexedAnimationGameBitmap(R.mipmap.base,4.5f,0);
         this.bitmap.setIndices(0,1,2,3);
         this.bitmap2 = new IndexedAnimationGameBitmap(R.mipmap.base2,4.5f,0);
@@ -43,22 +53,39 @@ public class Player implements GameObject, BoxCollidable {
     }
 
     public void update() {
+        MainGame game = MainGame.get();
         velocityX = joystick.getActuatorX()*MAX_SPEED;
-        velocityY = joystick.getActuatorY()*MAX_SPEED;
         x += velocityX;
-        y += velocityY;
+        if(state == State.jump){
+            float y = (float) (this.y + velocityY*game.frameTime);
+            velocityY += GRAVITY*game.frameTime;
+            this.y = y;
+        }
+        if(this.y>=ground_y)
+        {
+            y = ground_y;
+            state = State.idle;
+        }
 
+        //방향전환
         if(velocityX>0) {
             isInverse = 1;
-            this.bitmap.setIndices(0,1,2,3);
+            if(state == State.jump) this.bitmap.setIndices(100,101);
+            else this.bitmap.setIndices(0,1,2,3);
         } else if(velocityX < 0) {
             isInverse = -1;
-            this.bitmap2.setIndices(3,2,1,0);
+            if(state == State.jump) this.bitmap2.setIndices(103,102);
+            else this.bitmap2.setIndices(3,2,1,0);
         }
         else{
+
             this.bitmap.setIndices(0);
             this.bitmap2.setIndices(3);
+            if(state == State.jump) this.bitmap.setIndices(101);
+            if(state == State.jump) this.bitmap2.setIndices(102);
         }
+
+        //맵이동
         if(y<0) {
             if(bg.isLast()) {
                 y = 900;
@@ -91,5 +118,14 @@ public class Player implements GameObject, BoxCollidable {
     public void getBoundingRect(RectF rect) {
 
         bitmap.getBoundingRect(x,y,rect);
+    }
+
+    public void jump() {
+        if(state != State.idle){
+            Log.d(TAG,"Not in a state that can't jump " + state);
+            return;
+        }
+        state = State.jump;
+        velocityY = -JUMPPOWER;
     }
 }
