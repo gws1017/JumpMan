@@ -79,12 +79,12 @@
    
 12.  주차별 커밋 통계
 
-    ![image](https://user-images.githubusercontent.com/65538479/118348242-e14a0580-b583-11eb-88ac-490a274b5d11.png)
+    ![image](https://user-images.githubusercontent.com/65538479/118350907-f4fd6800-b593-11eb-89de-c451c376dc09.png)
 
     
 
     | 주차  | 횟수 |
-    | :---: | :--: |
+    | --- | --- |
     | 1주차 |  1   |
     | 2주차 |  2   |
     | 3주차 |  0   |
