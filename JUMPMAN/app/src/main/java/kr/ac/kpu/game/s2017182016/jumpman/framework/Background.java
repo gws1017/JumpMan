@@ -74,12 +74,12 @@ public class Background implements GameObject {
         this.bitmap = GameBitmap.load(maps[--num]);
     }
     public boolean isLast() {
-        if( num< maps.length -1 ) return true;
-        else return false;
+        if( num< maps.length -1 ) return false;
+        else return true;
     }
 
     public boolean isFirst() {
-        if( num > 0 ) return true;
-        else return false;
+        if( num > 0 ) return false;
+        else return true;
     }
 }

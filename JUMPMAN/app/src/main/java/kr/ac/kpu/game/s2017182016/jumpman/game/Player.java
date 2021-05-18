@@ -1,15 +1,12 @@
 package kr.ac.kpu.game.s2017182016.jumpman.game;
 
-import android.graphics.Bitmap;
 import android.graphics.Canvas;
-import android.graphics.Matrix;
 import android.graphics.RectF;
 import android.util.Log;
 
 import kr.ac.kpu.game.s2017182016.jumpman.R;
 import kr.ac.kpu.game.s2017182016.jumpman.framework.Background;
 import kr.ac.kpu.game.s2017182016.jumpman.framework.BoxCollidable;
-import kr.ac.kpu.game.s2017182016.jumpman.framework.GameBitmap;
 import kr.ac.kpu.game.s2017182016.jumpman.framework.GameObject;
 import kr.ac.kpu.game.s2017182016.jumpman.framework.IndexedAnimationGameBitmap;
 import kr.ac.kpu.game.s2017182016.jumpman.framework.MainGame;
@@ -20,7 +17,7 @@ public class Player implements GameObject, BoxCollidable {
 
     private static final float MAX_SPEED = 3.5f;
     private static final String TAG = Player.class.getSimpleName();
-    private static final float JUMPPOWER = 100;
+    private static final float JUMPPOWER = 30;
     private static final float GRAVITY = 2000;
     private final Background bg;
     private float x;
@@ -30,9 +27,10 @@ public class Player implements GameObject, BoxCollidable {
     private final Joystick joystick;
     private double velocityX;
     private double velocityY;
-    private int chargtime = 0;
+    private int chargetime = 0;
     private int isInverse = 1;
     private float ground_y;
+    private float ground_y2;
     private int[] ANIM_INDICES_IDLE = {0};
     private int[] ANIM_INDICES_INV_IDLE = {3};
     private int[] ANIM_INDICES_MOVE = {0,1,2,3};
@@ -82,6 +80,7 @@ public class Player implements GameObject, BoxCollidable {
         this.joystick = joystick;
         this.bg = MainGame.bg;
         this.ground_y =y;
+        this.ground_y2 = 1500;
 
     }
 
@@ -90,8 +89,9 @@ public class Player implements GameObject, BoxCollidable {
         velocityX = joystick.getActuatorX()*MAX_SPEED;
         x += velocityX;
         if(state == State.ready){
-           chargtime++;
-           return;
+           chargetime++;
+           if(chargetime >45) jump();
+           else return;
         }
         if(state == State.jump){
             float y = (float) (this.y + velocityY*game.frameTime);
@@ -100,7 +100,8 @@ public class Player implements GameObject, BoxCollidable {
         }
         if(this.y>=ground_y)
         {
-            this.y = ground_y;
+            if(!bg.isFirst())this.y = ground_y2;
+            else this.y = ground_y;
             setState(State.idle);
         }
 
@@ -118,19 +119,18 @@ public class Player implements GameObject, BoxCollidable {
 
         //맵이동
         if(y<0) {
-            if(bg.isLast()) {
+            if(!bg.isLast()) {
                 y = 900;
                 bg.nextimg();
             }
         }
         else if(y >GameView.view.getHeight()) {
-            if(bg.isFirst()) {
+            if(!bg.isFirst()) {
                 y = 10;
                 bg.previmg();
+                setState(State.jump);
             }
         }
-        Log.d(TAG,"Current State : " + state);
-        Log.d(TAG,"y " + this.y + " ground y "+ ground_y);
     }
 
     @Override
@@ -163,14 +163,15 @@ public class Player implements GameObject, BoxCollidable {
     public void jump() {
          if(state == State.ready){
             setState(State.jump);
-            velocityY = -JUMPPOWER*this.chargtime;
+            velocityY = -JUMPPOWER*this.chargetime;
         }
         else{
             Log.d(TAG,"Not in a state that can't jump " + state);
             return;
         }
+        Log.d(TAG,"y " + chargetime);
 
-            this.chargtime = 0;
+            this.chargetime = 0;
 
     }
 }
