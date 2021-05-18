@@ -42,7 +42,7 @@ public class MainGame {
         int w = GameView.view.getWidth();//GameView.view.getWidth();//배경이 그려지는위치를 가져오기
         int h = GameView.view.getHeight();
 
-        player = new Player(w/2,h-100,joystick);
+        player = new Player(w/2,h-140,joystick);
         objects.add(player);
 
         initialized = true;

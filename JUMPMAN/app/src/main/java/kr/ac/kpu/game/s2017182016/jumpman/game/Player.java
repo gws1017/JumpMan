@@ -19,6 +19,7 @@ public class Player implements GameObject, BoxCollidable {
     private static final String TAG = Player.class.getSimpleName();
     private static final float JUMPPOWER = 30;
     private static final float GRAVITY = 2000;
+    public static final int MAX_JUMPPOWER = 43;
     private final Background bg;
     private float x;
     private float y;
@@ -86,16 +87,18 @@ public class Player implements GameObject, BoxCollidable {
 
     public void update() {
         MainGame game = MainGame.get();
-        velocityX = joystick.getActuatorX()*MAX_SPEED;
+        velocityX = joystick.getActuatorX()*MAX_SPEED*game.frameTime;
         x += velocityX;
         if(state == State.ready){
            chargetime++;
-           if(chargetime >45) jump();
+           if(chargetime > MAX_JUMPPOWER) jump();
            else return;
         }
         if(state == State.jump){
             float y = (float) (this.y + velocityY*game.frameTime);
             velocityY += GRAVITY*game.frameTime;
+//            velocityX += isInverse*-JUMPPOWER*this.chargetime;
+//            x += velocityX;
             this.y = y;
         }
         if(this.y>=ground_y)
