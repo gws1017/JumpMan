@@ -69,17 +69,18 @@ public class MainGame {
                 if(joystick.isPressed((double)event.getX(),(double)event.getY())){
                     joystick.setIsPressed(true);
                 }
-                else player.jump();
+                else player.ready();
                 return true;
             case MotionEvent.ACTION_MOVE:
                 if(joystick.getIsPressed()){
                     joystick.setActuator((double)event.getX(),(double)event.getY());
                 }
-                else player.jump();
+                else player.ready();
                 return true;
             case MotionEvent.ACTION_UP:
                 joystick.setIsPressed(false);
                 joystick.resetActuator();
+                player.jump();
                 return true;
         }
         return false;
