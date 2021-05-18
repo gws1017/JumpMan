@@ -15,9 +15,10 @@ import kr.ac.kpu.game.s2017182016.jumpman.framework.view.Joystick;
 
 public class Player implements GameObject, BoxCollidable {
 
-    private static final float MAX_SPEED = 3.5f;
+    private static final float MAX_SPEED = 300.0f;
     private static final String TAG = Player.class.getSimpleName();
-    private static final float JUMPPOWER = 30;
+    private static final float JUMPPOWERY = 30;
+    private static final float JUMPPOWERX = 20;
     private static final float GRAVITY = 2000;
     public static final int MAX_JUMPPOWER = 43;
     private final Background bg;
@@ -87,19 +88,26 @@ public class Player implements GameObject, BoxCollidable {
 
     public void update() {
         MainGame game = MainGame.get();
-        velocityX = joystick.getActuatorX()*MAX_SPEED*game.frameTime;
-        x += velocityX;
+
         if(state == State.ready){
            chargetime++;
-           if(chargetime > MAX_JUMPPOWER) jump();
+           if(chargetime > MAX_JUMPPOWER)
+           {
+               jump();
+               return;
+           }
            else return;
-        }
-        if(state == State.jump){
+        } else if(state == State.jump){
             float y = (float) (this.y + velocityY*game.frameTime);
+            float x = (float) (this.x - isInverse*velocityX*game.frameTime);
             velocityY += GRAVITY*game.frameTime;
-//            velocityX += isInverse*-JUMPPOWER*this.chargetime;
-//            x += velocityX;
+//            velocityX += GRAVITY*game.frameTime;
             this.y = y;
+            this.x = x;
+        } else{
+            velocityX = joystick.getActuatorX()* MAX_SPEED *game.frameTime;
+            x += velocityX;
+
         }
         if(this.y>=ground_y)
         {
@@ -107,19 +115,6 @@ public class Player implements GameObject, BoxCollidable {
             else this.y = ground_y;
             setState(State.idle);
         }
-
-        //방향전환
-        if(velocityX>0) {
-            isInverse = 1;
-           setState(State.move);
-        } else if(velocityX < 0) {
-            isInverse = -1;
-            setState(State.move);
-        }
-        else{
-            if(this.state != State.jump)setState(State.idle);
-        }
-
         //맵이동
         if(y<0) {
             if(!bg.isLast()) {
@@ -134,6 +129,20 @@ public class Player implements GameObject, BoxCollidable {
                 setState(State.jump);
             }
         }
+
+        //방향전환
+        if(this.state != State.jump && this.state != State.ready) {
+            if (velocityX > 0) {
+                isInverse = 1;
+                setState(State.move);
+            } else if (velocityX < 0) {
+                isInverse = -1;
+                setState(State.move);
+            } else {
+                setState(State.idle);
+            }
+        }
+
     }
 
     @Override
@@ -166,7 +175,8 @@ public class Player implements GameObject, BoxCollidable {
     public void jump() {
          if(state == State.ready){
             setState(State.jump);
-            velocityY = -JUMPPOWER*this.chargetime;
+            velocityY = -JUMPPOWERY *this.chargetime;
+            velocityX = -JUMPPOWERX *this.chargetime;
         }
         else{
             Log.d(TAG,"Not in a state that can't jump " + state);
