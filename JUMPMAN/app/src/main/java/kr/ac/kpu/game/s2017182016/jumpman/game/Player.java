@@ -1,6 +1,7 @@
 package kr.ac.kpu.game.s2017182016.jumpman.game;
 
 import android.graphics.Canvas;
+import android.graphics.Rect;
 import android.graphics.RectF;
 import android.util.Log;
 
@@ -40,6 +41,8 @@ public class Player implements GameObject, BoxCollidable {
     private int[] ANIM_INDICES_INV_READY = {103};
     private int[] ANIM_INDICES_Jump = {101};
     private int[] ANIM_INDICES_INV_Jump = {102};
+    private Rect COL_BOX_OFFSETS_IDLE = new Rect(-15,-15,15,15);
+    private Rect collisionOffsetRect = COL_BOX_OFFSETS_IDLE;
 
 
 
@@ -160,8 +163,13 @@ public class Player implements GameObject, BoxCollidable {
 
     @Override
     public void getBoundingRect(RectF rect) {
-
-        bitmap.getBoundingRect(x,y,rect);
+        float mult = GameView.MULTIPLIER;
+        rect.set(
+                x + collisionOffsetRect.left * mult,
+                y + collisionOffsetRect.top * mult,
+                x + collisionOffsetRect.right * mult,
+                y + collisionOffsetRect.bottom * mult
+        );
     }
     public void ready() {
         if(state == State.idle) {

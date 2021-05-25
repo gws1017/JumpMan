@@ -1,11 +1,16 @@
 package kr.ac.kpu.game.s2017182016.jumpman.game;
 
 import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.RectF;
 import android.view.MotionEvent;
 
 import java.util.ArrayList;
 
+import kr.ac.kpu.game.s2017182016.jumpman.BuildConfig;
 import kr.ac.kpu.game.s2017182016.jumpman.R;
+import kr.ac.kpu.game.s2017182016.jumpman.framework.iface.BoxCollidable;
 import kr.ac.kpu.game.s2017182016.jumpman.framework.iface.GameObject;
 import kr.ac.kpu.game.s2017182016.jumpman.framework.object.Background;
 import kr.ac.kpu.game.s2017182016.jumpman.framework.view.GameView;
@@ -17,7 +22,18 @@ public class MainGame {
     public static Background bg;
     private Player player;
     private Joystick joystick;
+    private RectF collisionRect;
+    private Paint collisionPaint;
 
+    protected MainGame(){
+        instance = this;
+        if(BuildConfig.showsCollisionBox){
+            collisionRect = new RectF();
+            collisionPaint = new Paint();
+            collisionPaint.setStyle(Paint.Style.STROKE);
+            collisionPaint.setColor(Color.RED);
+        }
+    }
     public static MainGame get(){
         if(instance == null){
             instance = new MainGame();
@@ -45,7 +61,6 @@ public class MainGame {
 
         player = new Player(w/2,h-140,joystick);
         objects.add(player);
-
         initialized = true;
     }
 
@@ -59,6 +74,16 @@ public class MainGame {
     public void draw(Canvas canvas){
         for(GameObject o : objects){
             o.draw(canvas);
+        }
+        if(BuildConfig.showsCollisionBox){
+                for(GameObject o : objects){
+                    if(!(o instanceof BoxCollidable)){
+                        continue;
+                    }
+                    ((BoxCollidable)o).getBoundingRect(collisionRect);
+                    canvas.drawRect(collisionRect,collisionPaint);
+                }
+
         }
     }
 
