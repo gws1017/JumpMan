@@ -1,8 +1,7 @@
-package kr.ac.kpu.game.s2017182016.jumpman.framework;
+package kr.ac.kpu.game.s2017182016.jumpman.framework.bitmap;
 
 import android.graphics.Canvas;
 import android.graphics.Rect;
-import android.util.Log;
 
 import java.util.ArrayList;
 

@@ -1,4 +1,4 @@
-package kr.ac.kpu.game.s2017182016.jumpman.framework;
+package kr.ac.kpu.game.s2017182016.jumpman.framework.bitmap;
 
 import android.content.res.Resources;
 import android.graphics.Bitmap;

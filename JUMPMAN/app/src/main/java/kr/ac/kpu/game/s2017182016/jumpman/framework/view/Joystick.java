@@ -4,7 +4,7 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 
-import kr.ac.kpu.game.s2017182016.jumpman.framework.GameObject;
+import kr.ac.kpu.game.s2017182016.jumpman.framework.iface.GameObject;
 
 public class Joystick implements GameObject {
 

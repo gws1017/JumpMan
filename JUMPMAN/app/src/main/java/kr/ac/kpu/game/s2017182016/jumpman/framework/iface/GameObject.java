@@ -1,4 +1,4 @@
-package kr.ac.kpu.game.s2017182016.jumpman.framework;
+package kr.ac.kpu.game.s2017182016.jumpman.framework.iface;
 
 import android.graphics.Canvas;
 

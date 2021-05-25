@@ -5,11 +5,10 @@ import android.graphics.RectF;
 import android.util.Log;
 
 import kr.ac.kpu.game.s2017182016.jumpman.R;
-import kr.ac.kpu.game.s2017182016.jumpman.framework.Background;
-import kr.ac.kpu.game.s2017182016.jumpman.framework.BoxCollidable;
-import kr.ac.kpu.game.s2017182016.jumpman.framework.GameObject;
-import kr.ac.kpu.game.s2017182016.jumpman.framework.IndexedAnimationGameBitmap;
-import kr.ac.kpu.game.s2017182016.jumpman.framework.MainGame;
+import kr.ac.kpu.game.s2017182016.jumpman.framework.object.Background;
+import kr.ac.kpu.game.s2017182016.jumpman.framework.iface.BoxCollidable;
+import kr.ac.kpu.game.s2017182016.jumpman.framework.iface.GameObject;
+import kr.ac.kpu.game.s2017182016.jumpman.framework.bitmap.IndexedAnimationGameBitmap;
 import kr.ac.kpu.game.s2017182016.jumpman.framework.view.GameView;
 import kr.ac.kpu.game.s2017182016.jumpman.framework.view.Joystick;
 

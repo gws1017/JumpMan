@@ -9,7 +9,7 @@ import android.view.View;
 
 import androidx.annotation.Nullable;
 
-import kr.ac.kpu.game.s2017182016.jumpman.framework.MainGame;
+import kr.ac.kpu.game.s2017182016.jumpman.game.MainGame;
 
 public class GameView extends View {
 
