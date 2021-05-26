@@ -18,7 +18,7 @@ public class Player implements GameObject, BoxCollidable {
     private static final float MAX_SPEED = 300.0f;
     private static final String TAG = Player.class.getSimpleName();
     private static final float JUMPPOWERY = 30;
-    private static final float JUMPPOWERX = 20;
+    private static final float JUMPPOWERX = 18;
     private static final float GRAVITY = 2000;
     public static final int MAX_JUMPPOWER = 43;
     private final Background bg;
@@ -28,9 +28,11 @@ public class Player implements GameObject, BoxCollidable {
     private final IndexedAnimationGameBitmap bitmap2;
     private final Joystick joystick;
     private double velocityX;
+    private double jumpX;
     private double velocityY;
     private int chargetime = 0;
     private int isInverse = 1;
+    private int temp = 0;
     private float ground_y;
     private float ground_y2;
     private int[] ANIM_INDICES_IDLE = {0};
@@ -90,7 +92,6 @@ public class Player implements GameObject, BoxCollidable {
 
     public void update() {
         MainGame game = MainGame.get();
-
         if(state == State.ready){
            chargetime++;
            if(chargetime > MAX_JUMPPOWER)
@@ -100,16 +101,22 @@ public class Player implements GameObject, BoxCollidable {
            }
            else return;
         } else if(state == State.jump){
-            float y = (float) (this.y + velocityY*game.frameTime);
-            float x = (float) (this.x - isInverse*velocityX*game.frameTime);
+            float dy = (float) (this.y + velocityY*game.frameTime);
+            float dx = this.x;
+            if(isInverse == 1){
+                if(jumpX < 0 ) jumpX *= -1;
+                dx = (float) (this.x + jumpX*game.frameTime);
+            }else if(isInverse == -1){
+                if(jumpX > 0 ) jumpX *= -1;
+                dx = (float) (this.x + jumpX*game.frameTime);
+            }
             velocityY += GRAVITY*game.frameTime;
 //            velocityX += GRAVITY*game.frameTime;
-            this.y = y;
-            this.x = x;
+            this.y = dy;
+            this.x = dx;
         } else{
             velocityX = joystick.getActuatorX()* MAX_SPEED *game.frameTime;
             x += velocityX;
-
         }
         if(this.y>=ground_y)
         {
@@ -144,7 +151,6 @@ public class Player implements GameObject, BoxCollidable {
                 setState(State.idle);
             }
         }
-
     }
 
     @Override
@@ -183,7 +189,7 @@ public class Player implements GameObject, BoxCollidable {
          if(state == State.ready){
             setState(State.jump);
             velocityY = -JUMPPOWERY *this.chargetime;
-            velocityX = -JUMPPOWERX *this.chargetime;
+            jumpX = -JUMPPOWERX *this.chargetime;
         }
         else{
             Log.d(TAG,"Not in a state that can't jump " + state);
