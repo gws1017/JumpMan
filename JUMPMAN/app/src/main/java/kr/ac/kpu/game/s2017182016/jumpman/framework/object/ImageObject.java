@@ -33,6 +33,16 @@ public class ImageObject implements GameObject, BoxCollidable {
         dstRect.set(l, t, r, b);
     }
 
+    protected void init(float x, float y, int width, int height) {
+        int w = width;
+        int h = height;
+        srcRect.set(0, 0, w, h);
+        float l = x - w / 2 * GameView.MULTIPLIER;
+        float t = y - h / 2 * GameView.MULTIPLIER;
+        float r = x + w / 2 * GameView.MULTIPLIER;
+        float b = y + h / 2 * GameView.MULTIPLIER;
+        dstRect.set(l, t, r, b);
+    }
     public float getRight() {
         return dstRect.right;
     }
