@@ -45,7 +45,7 @@ public class Player implements GameObject, BoxCollidable {
     private int[] ANIM_INDICES_INV_Jump = {102};
     private Rect COL_BOX_OFFSETS_IDLE = new Rect(-15,-15,15,15);
     private Rect collisionOffsetRect = COL_BOX_OFFSETS_IDLE;
-
+    private float playerWidth = 35;
 
 
     private enum State{
@@ -151,6 +151,9 @@ public class Player implements GameObject, BoxCollidable {
                 setState(State.idle);
             }
         }
+
+        if(this.x-playerWidth < 0 ) this.x = playerWidth;
+        else if(this.x+playerWidth > GameView.view.getWidth()) this.x =GameView.view.getWidth()-playerWidth;
     }
 
     @Override
