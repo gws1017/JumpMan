@@ -19,7 +19,7 @@ public class Background implements GameObject {
 //    private static int imageHeight;
 //    private static int bgLeft;
 //    private static int bgRight;
-    private static Bitmap bitmap;
+    public static Bitmap bitmap;
     private int[] maps= {
             R.mipmap.bg_1,
             R.mipmap.bg_2,
