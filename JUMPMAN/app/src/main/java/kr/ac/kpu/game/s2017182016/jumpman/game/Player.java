@@ -52,7 +52,7 @@ public class Player implements GameObject, BoxCollidable {
 
 
     private enum State{
-        idle,move,ready,jump,land
+        idle,move,ready,jump,falling,land
     }
     public void setState(State state){
         this.state = state;
@@ -63,6 +63,7 @@ public class Player implements GameObject, BoxCollidable {
                 case move: indices = ANIM_INDICES_MOVE; break;
                 case ready: indices =ANIM_INDICES_READY;break;
                 case jump: indices = ANIM_INDICES_Jump;break;
+                case falling: indices = ANIM_INDICES_Jump;break;
             }
             bitmap.setIndices(indices);
         }else if(isInverse == -1){
@@ -71,6 +72,7 @@ public class Player implements GameObject, BoxCollidable {
                 case move: indices = ANIM_INDICES_INV_MOVE; break;
                 case ready: indices =ANIM_INDICES_INV_READY;break;
                 case jump: indices = ANIM_INDICES_INV_Jump;break;
+                case falling: indices = ANIM_INDICES_INV_Jump;break;
             }
             bitmap2.setIndices(indices);
         }
@@ -96,6 +98,7 @@ public class Player implements GameObject, BoxCollidable {
     public void update() {
         MainGame game = MainGame.get();
         px = this.x;
+        float foot = y + collisionOffsetRect.bottom * GameView.MULTIPLIER;
         if(state == State.ready){
            chargetime++;
            if(chargetime > MAX_JUMPPOWER)
@@ -104,8 +107,9 @@ public class Player implements GameObject, BoxCollidable {
                return;
            }
            else return;
-        } else if(state == State.jump){
-            float dy = (float) (this.y + velocityY*game.frameTime);
+        } else if(state == State.jump|| state == State.falling){
+            float dy = (float) (velocityY*game.frameTime);
+            float platformTop = findNearestPlatformTop();
             float dx = this.x;
             if(isInverse == 1){
                 if(jumpX < 0 ) jumpX *= -1;
@@ -114,14 +118,26 @@ public class Player implements GameObject, BoxCollidable {
                 if(jumpX > 0 ) jumpX *= -1;
                 dx = (float) (this.x + jumpX*game.frameTime);
             }
-
+            if (velocityY >= 0) {
+                if (foot+dy >= platformTop) {
+                    dy = platformTop - foot;
+                    setState(State.idle);
+                }
+            }
             velocityY += GRAVITY*game.frameTime;
 //            velocityX += GRAVITY*game.frameTime;
-            this.y = dy;
+            this.y = y + dy;
             this.x = dx;
-        } else{
+        } else if(state == State.idle|| state == State.move){
             velocityX = joystick.getActuatorX()* MAX_SPEED *game.frameTime;
             x += velocityX;
+            float platformTop = findNearestPlatformTop();
+            Log.d(TAG,"foot : " + foot + " platform Top : "+ platformTop + " state :"+state);
+            if (foot < platformTop) {
+                setState(State.falling);
+                velocityY = 0;
+                //this.y += 0.01;
+            }
         }
 
 
@@ -152,14 +168,7 @@ public class Player implements GameObject, BoxCollidable {
                 setState(State.idle);
             }
         }
-        if (velocityY >= 0) {
-            float foot = y + collisionOffsetRect.bottom * GameView.MULTIPLIER;
-            float platformTop = findNearestPlatformTop();
-            if (foot >= platformTop) {
-                y -= foot - platformTop+5;
-                setState(State.idle);
-            }
-        }
+
         if(this.x-playerWidth < 0 ) this.x = playerWidth;
         else if(this.x+playerWidth > GameView.view.getWidth()) this.x =GameView.view.getWidth()-playerWidth;
     }
@@ -222,7 +231,7 @@ public class Player implements GameObject, BoxCollidable {
         if(state == State.idle) {
             setState(State.ready);
         }else{
-            Log.d(TAG,"Not in a state that can't ready " + state);
+            //Log.d(TAG,"Not in a state that can't ready " + state);
             return;
         }
     }
@@ -233,10 +242,10 @@ public class Player implements GameObject, BoxCollidable {
             jumpX = -JUMPPOWERX *this.chargetime;
         }
         else{
-            Log.d(TAG,"Not in a state that can't jump " + state);
+           //Log.d(TAG,"Not in a state that can't jump " + state);
             return;
         }
-        Log.d(TAG,"y " + chargetime);
+        //Log.d(TAG,"y " + chargetime);
 
             this.chargetime = 0;
 
