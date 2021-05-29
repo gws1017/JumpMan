@@ -21,7 +21,7 @@ public class Player implements GameObject, BoxCollidable {
     private static final String TAG = Player.class.getSimpleName();
     private static final float JUMPPOWERY = 30;
     private static final float JUMPPOWERX = 18;
-    private static final float GRAVITY = 2000;
+    private static final float GRAVITY = 2050;
     public static final int MAX_JUMPPOWER = 43;
     private final Background bg;
     private float x;
@@ -97,7 +97,6 @@ public class Player implements GameObject, BoxCollidable {
 
     public void update() {
         MainGame game = MainGame.get();
-        px = this.x;
         float foot = y + collisionOffsetRect.bottom * GameView.MULTIPLIER;
         if(state == State.ready){
            chargetime++;
@@ -110,34 +109,35 @@ public class Player implements GameObject, BoxCollidable {
         } else if(state == State.jump|| state == State.falling){
             float dy = (float) (velocityY*game.frameTime);
             float platformTop = findNearestPlatformTop();
-            float dx = this.x;
+            float dx = 0;
+
             if(isInverse == 1){
                 if(jumpX < 0 ) jumpX *= -1;
-                dx = (float) (this.x + jumpX*game.frameTime);
+                dx = (float) ( jumpX*game.frameTime);
             }else if(isInverse == -1){
                 if(jumpX > 0 ) jumpX *= -1;
-                dx = (float) (this.x + jumpX*game.frameTime);
+                dx = (float) ( jumpX*game.frameTime);
             }
+            if(state == State.falling) dx = (float) ( jumpX*game.frameTime/3);
+
+
+
             if (velocityY >= 0) {
                 if (foot+dy >= platformTop) {
                     dy = platformTop - foot;
                     setState(State.idle);
                 }
             }
-            velocityY += GRAVITY*game.frameTime;
 //            velocityX += GRAVITY*game.frameTime;
+            Log.d(TAG,"velocityY : " + velocityY + " dy : "+ dy + " state :"+state);
+
             this.y = y + dy;
-            this.x = dx;
+            this.x = x + dx;
+            velocityY += GRAVITY*game.frameTime;
         } else if(state == State.idle|| state == State.move){
             velocityX = joystick.getActuatorX()* MAX_SPEED *game.frameTime;
             x += velocityX;
-            float platformTop = findNearestPlatformTop();
-            Log.d(TAG,"foot : " + foot + " platform Top : "+ platformTop + " state :"+state);
-            if (foot < platformTop) {
-                setState(State.falling);
-                velocityY = 0;
-                //this.y += 0.01;
-            }
+
         }
 
 
@@ -166,6 +166,13 @@ public class Player implements GameObject, BoxCollidable {
                 setState(State.move);
             } else {
                 setState(State.idle);
+            }
+            float platformTop = findNearestPlatformTop();
+            if (foot < platformTop) {
+                setState(State.falling);
+                if(state!= State.falling) velocityY = 0;
+                velocityX = 0;
+                //this.y += 0.01;
             }
         }
 
