@@ -28,7 +28,9 @@ public class StageMap implements GameObject {
     private int current;
 
     public StageMap(){
-        createObject();
+        createObject(0,180,130,180);
+        createObject(350,180,130,180);
+        createObject(130,325,220,30);
         createObject(185,40,110,50);
     }
 
@@ -76,7 +78,6 @@ public class StageMap implements GameObject {
 
         game.add(new Platform(0,180*viewHeight/imageHeight,130*viewWidth/imageWidth,viewHeight));
         game.add(new Platform(viewWidth,180*viewHeight/imageHeight,-130*viewWidth/imageWidth,viewHeight));
-        game.add(new Platform(130*viewWidth/imageWidth,viewHeight,220*viewWidth/imageWidth,-30*viewHeight/imageHeight));
 
 
     }

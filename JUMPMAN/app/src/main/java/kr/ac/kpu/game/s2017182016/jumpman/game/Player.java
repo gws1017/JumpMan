@@ -5,6 +5,8 @@ import android.graphics.Rect;
 import android.graphics.RectF;
 import android.util.Log;
 
+import java.util.ArrayList;
+
 import kr.ac.kpu.game.s2017182016.jumpman.R;
 import kr.ac.kpu.game.s2017182016.jumpman.framework.object.Background;
 import kr.ac.kpu.game.s2017182016.jumpman.framework.iface.BoxCollidable;
@@ -46,6 +48,7 @@ public class Player implements GameObject, BoxCollidable {
     private Rect COL_BOX_OFFSETS_IDLE = new Rect(-15,-15,15,15);
     private Rect collisionOffsetRect = COL_BOX_OFFSETS_IDLE;
     private float playerWidth = 35;
+    private float px;
 
 
     private enum State{
@@ -92,6 +95,7 @@ public class Player implements GameObject, BoxCollidable {
 
     public void update() {
         MainGame game = MainGame.get();
+        px = this.x;
         if(state == State.ready){
            chargetime++;
            if(chargetime > MAX_JUMPPOWER)
@@ -110,6 +114,7 @@ public class Player implements GameObject, BoxCollidable {
                 if(jumpX > 0 ) jumpX *= -1;
                 dx = (float) (this.x + jumpX*game.frameTime);
             }
+
             velocityY += GRAVITY*game.frameTime;
 //            velocityX += GRAVITY*game.frameTime;
             this.y = dy;
@@ -118,12 +123,8 @@ public class Player implements GameObject, BoxCollidable {
             velocityX = joystick.getActuatorX()* MAX_SPEED *game.frameTime;
             x += velocityX;
         }
-        if(this.y>=ground_y)
-        {
-            if(!bg.isFirst())this.y = ground_y2;
-            else this.y = ground_y;
-            setState(State.idle);
-        }
+
+
         //맵이동
         if(y<0) {
             if(!bg.isLast()) {
@@ -151,11 +152,48 @@ public class Player implements GameObject, BoxCollidable {
                 setState(State.idle);
             }
         }
-
+        if (velocityY >= 0) {
+            float foot = y + collisionOffsetRect.bottom * GameView.MULTIPLIER;
+            float platformTop = findNearestPlatformTop();
+            if (foot >= platformTop) {
+                y -= foot - platformTop+5;
+                setState(State.idle);
+            }
+        }
         if(this.x-playerWidth < 0 ) this.x = playerWidth;
         else if(this.x+playerWidth > GameView.view.getWidth()) this.x =GameView.view.getWidth()-playerWidth;
     }
 
+    private float findNearestPlatformTop() {
+        MainGame game = (MainGame)MainGame.get();
+        ArrayList<GameObject> objects = game.objects;
+        float top = GameView.view.getHeight();
+        for (GameObject obj: objects) {
+            if(obj instanceof Platform)
+            {
+                Platform platform = (Platform) obj;
+                RectF rect = platform.getBoundingRect();
+
+                if (rect.left > x || x > rect.right) {
+                    continue;
+                }
+                if (rect.top < y) {
+                    continue;
+                }
+                if (top > rect.top) {
+                    top = rect.top;
+                }
+
+            }
+        }
+        return top;
+    }
+    boolean CollisionDetect(RectF rect){
+      
+        if(x+playerWidth <rect.left|| x -playerWidth > rect.right) return false;
+        if(y+playerWidth <rect.top|| y -playerWidth > rect.bottom) return false;
+        return true;
+    }
     @Override
     public void draw(Canvas canvas) {
         if(isInverse== 1){
