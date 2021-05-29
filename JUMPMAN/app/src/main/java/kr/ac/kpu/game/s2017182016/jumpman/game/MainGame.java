@@ -58,7 +58,7 @@ public class MainGame {
         objects.add(joystick);
         int w = GameView.view.getWidth();//GameView.view.getWidth();//배경이 그려지는위치를 가져오기
         int h = GameView.view.getHeight();
-        objects.add(new StageMap());
+        objects.add(new StageMap(bg.num));
         player = new Player(w/2,h-140,joystick);
         objects.add(player);
         initialized = true;

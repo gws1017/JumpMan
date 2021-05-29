@@ -27,11 +27,27 @@ public class StageMap implements GameObject {
     private int rows;
     private int current;
 
-    public StageMap(){
-        createObject(0,180,130,180);
-        createObject(350,180,130,180);
-        createObject(130,325,220,30);
-        createObject(185,40,110,50);
+    public StageMap(int num){
+        switch (num)
+        {
+            case 0:
+                createObject(0,180,130,180);
+                createObject(350,180,130,180);
+                createObject(130,325,220,30);
+                createObject(185,40,110,50);
+                break;
+            case 1:
+                createObject(0,0,7,350);
+                createObject(472,0,10,350);
+                createObject(295,295,98,34);
+                createObject(407,198,65,32);
+                createObject(254,198,76,34);
+                createObject(118,102,76,65);
+                createObject(7,78,75,89);
+
+                break;
+        }
+
     }
 
 //    public StageMap(String filename) {

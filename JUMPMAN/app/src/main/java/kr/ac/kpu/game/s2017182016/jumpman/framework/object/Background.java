@@ -23,10 +23,15 @@ public class Background implements GameObject {
     private int[] maps= {
             R.mipmap.bg_1,
             R.mipmap.bg_2,
+            R.mipmap.bg_3,
+            R.mipmap.bg_4,
+            R.mipmap.bg_5,
+            R.mipmap.bg_6,
+            R.mipmap.bg_7,
     };
     public Rect srcRect = new Rect();
     public RectF dstRect = new RectF();
-    private int num = 0;
+    public int num = 0;
 
     public Background(int resId){
         bitmap = GameBitmap.load(resId);

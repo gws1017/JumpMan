@@ -33,64 +33,90 @@ public class Player implements GameObject, BoxCollidable {
     private double jumpX;
     private double velocityY;
     private int chargetime = 0;
+    private int prevchargetime = 0;
     private int isInverse = 1;
     private int temp = 0;
     private float ground_y;
     private float ground_y2;
     private int[] ANIM_INDICES_IDLE = {0};
     private int[] ANIM_INDICES_INV_IDLE = {3};
-    private int[] ANIM_INDICES_MOVE = {0,1,2,3};
-    private int[] ANIM_INDICES_INV_MOVE = {3,2,1,0};
+    private int[] ANIM_INDICES_MOVE = {0, 1, 2, 3};
+    private int[] ANIM_INDICES_INV_MOVE = {3, 2, 1, 0};
     private int[] ANIM_INDICES_READY = {100};
     private int[] ANIM_INDICES_INV_READY = {103};
     private int[] ANIM_INDICES_Jump = {101};
     private int[] ANIM_INDICES_INV_Jump = {102};
-    private Rect COL_BOX_OFFSETS_IDLE = new Rect(-15,-15,15,15);
+    private Rect COL_BOX_OFFSETS_IDLE = new Rect(-15, -15, 15, 15);
     private Rect collisionOffsetRect = COL_BOX_OFFSETS_IDLE;
     private float playerWidth = 35;
     private float px;
+    private RectF collisionRect = new RectF();
+    private int directionX = 1;
+    private int directionY = 1;
 
 
-    private enum State{
-        idle,move,ready,jump,falling,land
+    private enum State {
+        idle, move, ready, jump, falling, land
     }
-    public void setState(State state){
+
+    public void setState(State state) {
         this.state = state;
         int[] indices = ANIM_INDICES_IDLE;
-        if(isInverse == 1){
-            switch (state){
-                case idle: indices = ANIM_INDICES_IDLE; break;
-                case move: indices = ANIM_INDICES_MOVE; break;
-                case ready: indices =ANIM_INDICES_READY;break;
-                case jump: indices = ANIM_INDICES_Jump;break;
-                case falling: indices = ANIM_INDICES_Jump;break;
+        if (isInverse == 1) {
+            switch (state) {
+                case idle:
+                    indices = ANIM_INDICES_IDLE;
+                    break;
+                case move:
+                    indices = ANIM_INDICES_MOVE;
+                    break;
+                case ready:
+                    indices = ANIM_INDICES_READY;
+                    break;
+                case jump:
+                    indices = ANIM_INDICES_Jump;
+                    break;
+                case falling:
+                    indices = ANIM_INDICES_Jump;
+                    break;
             }
             bitmap.setIndices(indices);
-        }else if(isInverse == -1){
-            switch (state){
-                case idle: indices = ANIM_INDICES_INV_IDLE;break;
-                case move: indices = ANIM_INDICES_INV_MOVE; break;
-                case ready: indices =ANIM_INDICES_INV_READY;break;
-                case jump: indices = ANIM_INDICES_INV_Jump;break;
-                case falling: indices = ANIM_INDICES_INV_Jump;break;
+        } else if (isInverse == -1) {
+            switch (state) {
+                case idle:
+                    indices = ANIM_INDICES_INV_IDLE;
+                    break;
+                case move:
+                    indices = ANIM_INDICES_INV_MOVE;
+                    break;
+                case ready:
+                    indices = ANIM_INDICES_INV_READY;
+                    break;
+                case jump:
+                    indices = ANIM_INDICES_INV_Jump;
+                    break;
+                case falling:
+                    indices = ANIM_INDICES_INV_Jump;
+                    break;
             }
             bitmap2.setIndices(indices);
         }
 
     }
+
     private State state = State.idle;
 
-    public Player(float x, float y,Joystick joystick){
-        this.x= x;
-        this.y =y;
-        this.bitmap = new IndexedAnimationGameBitmap(R.mipmap.base,4.5f,0);
+    public Player(float x, float y, Joystick joystick) {
+        this.x = x;
+        this.y = y;
+        this.bitmap = new IndexedAnimationGameBitmap(R.mipmap.base, 4.5f, 0);
         setState(State.idle);
-        this.bitmap2 = new IndexedAnimationGameBitmap(R.mipmap.base2,4.5f,0);
+        this.bitmap2 = new IndexedAnimationGameBitmap(R.mipmap.base2, 4.5f, 0);
         this.isInverse = -1;
         setState(State.idle);
         this.joystick = joystick;
         this.bg = MainGame.bg;
-        this.ground_y =y;
+        this.ground_y = y;
         this.ground_y2 = 1500;
 
     }
@@ -98,66 +124,93 @@ public class Player implements GameObject, BoxCollidable {
     public void update() {
         MainGame game = MainGame.get();
         float foot = y + collisionOffsetRect.bottom * GameView.MULTIPLIER;
-        if(state == State.ready){
-           chargetime++;
-           if(chargetime > MAX_JUMPPOWER)
-           {
-               jump();
-               return;
-           }
-           else return;
-        } else if(state == State.jump|| state == State.falling){
-            float dy = (float) (velocityY*game.frameTime);
+        if (state == State.ready) {
+            chargetime++;
+            if (chargetime > MAX_JUMPPOWER) {
+                jump();
+                return;
+            } else return;
+        } else if (state == State.jump || state == State.falling) {
+            float dy = (float) (velocityY * game.frameTime);
             float platformTop = findNearestPlatformTop();
-            float dx = 0;
-
-            if(isInverse == 1){
-                if(jumpX < 0 ) jumpX *= -1;
-                dx = (float) ( jumpX*game.frameTime);
-            }else if(isInverse == -1){
-                if(jumpX > 0 ) jumpX *= -1;
-                dx = (float) ( jumpX*game.frameTime);
+            float dx = directionX*this.x;
+            getBoundingRect(collisionRect);
+            if(CollisionDetect(collisionRect)) {
+                directionX = -1;
+                velocityY = -JUMPPOWERY* this.prevchargetime/2;
+                this.prevchargetime = 0;
             }
-            if(state == State.falling) dx = (float) ( jumpX*game.frameTime/3);
+            if (isInverse == 1) {
+                if (jumpX < 0) jumpX *= -1;
+                dx = (float) (jumpX * game.frameTime);
+            if (state == State.falling) dx = (float) (jumpX * game.frameTime /1.5);
+            } else if (isInverse == -1) {
+                if (jumpX > 0) jumpX *= -1;
+                dx = (float) (jumpX * game.frameTime);
+            if (state == State.falling) dx = (float) (jumpX * game.frameTime /1.5);
+            }
 
 
 
             if (velocityY >= 0) {
-                if (foot+dy >= platformTop) {
+                if (foot + dy >= platformTop) {
                     dy = platformTop - foot;
                     setState(State.idle);
                 }
             }
 //            velocityX += GRAVITY*game.frameTime;
-            Log.d(TAG,"velocityY : " + velocityY + " dy : "+ dy + " state :"+state);
 
-            this.y = y + dy;
-            this.x = x + dx;
-            velocityY += GRAVITY*game.frameTime;
-        } else if(state == State.idle|| state == State.move){
-            velocityX = joystick.getActuatorX()* MAX_SPEED *game.frameTime;
+            if(state == State.falling) directionX = 1;
+            this.x = x + directionX * dx;
+            this.y = y +  dy;
+
+            velocityY +=  GRAVITY * game.frameTime;
+        } else if (state == State.idle || state == State.move) {
+            directionX = 1;
+            directionY = 1;
+            px = x;
+            velocityX = joystick.getActuatorX() * MAX_SPEED * game.frameTime;
             x += velocityX;
+            getBoundingRect(collisionRect);
+            if(CollisionDetect(collisionRect)) x = px;
 
         }
 
 
         //맵이동
-        if(y<0) {
-            if(!bg.isLast()) {
+        if (y < 0) {
+
+            if (!bg.isLast()) {
                 y = 900;
                 bg.nextimg();
+                ArrayList<GameObject> objects = game.objects;
+                for (GameObject obj : objects) {
+                    if (obj instanceof Platform) {
+                        Platform platform = (Platform) obj;
+                        game.remove(platform);
+                    }
+                }
+                game.add(new StageMap(bg.num));
             }
-        }
-        else if(y >GameView.view.getHeight()) {
-            if(!bg.isFirst()) {
+        } else if (y >= 950) {
+            if (!bg.isFirst()) {
+
                 y = 10;
                 bg.previmg();
                 setState(State.jump);
+                ArrayList<GameObject> objects = game.objects;
+                for (GameObject obj : objects) {
+                    if (obj instanceof Platform) {
+                        Platform platform = (Platform) obj;
+                        game.remove(platform);
+                    }
+                }
+                game.add(new StageMap(bg.num));
             }
         }
 
         //방향전환
-        if(this.state != State.jump && this.state != State.ready) {
+        if (this.state != State.jump && this.state != State.ready) {
             if (velocityX > 0) {
                 isInverse = 1;
                 setState(State.move);
@@ -170,23 +223,23 @@ public class Player implements GameObject, BoxCollidable {
             float platformTop = findNearestPlatformTop();
             if (foot < platformTop) {
                 setState(State.falling);
-                if(state!= State.falling) velocityY = 0;
+                if (state != State.falling) velocityY = 0;
                 velocityX = 0;
                 //this.y += 0.01;
             }
         }
 
-        if(this.x-playerWidth < 0 ) this.x = playerWidth;
-        else if(this.x+playerWidth > GameView.view.getWidth()) this.x =GameView.view.getWidth()-playerWidth;
+        if (this.x - playerWidth < 0) this.x = playerWidth;
+        else if (this.x + playerWidth > GameView.view.getWidth())
+            this.x = GameView.view.getWidth() - playerWidth;
     }
 
     private float findNearestPlatformTop() {
-        MainGame game = (MainGame)MainGame.get();
+        MainGame game = (MainGame) MainGame.get();
         ArrayList<GameObject> objects = game.objects;
         float top = GameView.view.getHeight();
-        for (GameObject obj: objects) {
-            if(obj instanceof Platform)
-            {
+        for (GameObject obj : objects) {
+            if (obj instanceof Platform) {
                 Platform platform = (Platform) obj;
                 RectF rect = platform.getBoundingRect();
 
@@ -204,12 +257,31 @@ public class Player implements GameObject, BoxCollidable {
         }
         return top;
     }
-    boolean CollisionDetect(RectF rect){
-      
-        if(x+playerWidth <rect.left|| x -playerWidth > rect.right) return false;
-        if(y+playerWidth <rect.top|| y -playerWidth > rect.bottom) return false;
-        return true;
+
+    boolean CollisionDetect(RectF rect) {
+        MainGame game = (MainGame) MainGame.get();
+        ArrayList<GameObject> objects = game.objects;
+        float top = GameView.view.getHeight();
+        for (GameObject obj : objects) {
+            if (obj instanceof Platform) {
+                Platform platform = (Platform) obj;
+                RectF rect2 = platform.getBoundingRect();
+                if (rect.right < rect2.left || rect.left > rect2.right) continue;
+                if (rect.top < rect2.top || rect.bottom > rect2.bottom) continue;
+                if(state == State.jump){
+                    if(rect.left < rect2.right && rect.left > rect2.left) directionX = -1;
+                    if(rect.right < rect2.left && rect.right > rect2.right) directionX = -1;
+                }
+                return true;
+            }
+        }
+        return false;
     }
+
+
+
+
+
     @Override
     public void draw(Canvas canvas) {
         if(isInverse== 1){
@@ -253,7 +325,7 @@ public class Player implements GameObject, BoxCollidable {
             return;
         }
         //Log.d(TAG,"y " + chargetime);
-
+            this.prevchargetime = this.chargetime;
             this.chargetime = 0;
 
     }
