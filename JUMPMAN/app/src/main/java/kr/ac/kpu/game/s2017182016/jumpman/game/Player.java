@@ -17,12 +17,12 @@ import kr.ac.kpu.game.s2017182016.jumpman.framework.view.Joystick;
 
 public class Player implements GameObject, BoxCollidable {
 
-    private static final float MAX_SPEED = 300.0f;
+    private static final float MAX_SPEED = 300.0f*GameView.view.getWidth()/2200;
     private static final String TAG = Player.class.getSimpleName();
     private static final float JUMPPOWERY = 30;
     private static final float JUMPPOWERX = 18;
-    private static final float GRAVITY = 2050;
-    public static final int MAX_JUMPPOWER = 43;
+    private static final float GRAVITY = GameView.view.getHeight()*2050/1003;
+    public static final int MAX_JUMPPOWER = GameView.view.getHeight()*43/1003;
     private final Background bg;
     private float x;
     private float y;
@@ -125,7 +125,7 @@ public class Player implements GameObject, BoxCollidable {
         MainGame game = MainGame.get();
         float foot = y + collisionOffsetRect.bottom * GameView.MULTIPLIER;
         if (state == State.ready) {
-            chargetime++;
+            chargetime += 60*game.frameTime*GameView.view.getHeight()/1003;
             if (chargetime > MAX_JUMPPOWER) {
                 jump();
                 return;
@@ -134,37 +134,45 @@ public class Player implements GameObject, BoxCollidable {
             float dy = (float) (velocityY * game.frameTime);
             float platformTop = findNearestPlatformTop();
             float dx = directionX*this.x;
+
             getBoundingRect(collisionRect);
             if(CollisionDetect(collisionRect)) {
                 directionX = -1;
+                if(state == State.jump){
                 velocityY = -JUMPPOWERY* this.prevchargetime/2;
+                dy = (float) (velocityY * game.frameTime);
                 this.prevchargetime = 0;
+                }
             }
+
             if (isInverse == 1) {
                 if (jumpX < 0) jumpX *= -1;
                 dx = (float) (jumpX * game.frameTime);
-            if (state == State.falling) dx = (float) (jumpX * game.frameTime /1.5);
+            if (state == State.falling) dx = (float) (jumpX * game.frameTime /2);
             } else if (isInverse == -1) {
                 if (jumpX > 0) jumpX *= -1;
                 dx = (float) (jumpX * game.frameTime);
-            if (state == State.falling) dx = (float) (jumpX * game.frameTime /1.5);
+            if (state == State.falling) dx = (float) (jumpX * game.frameTime /2);
             }
 
 
 
+
+//            velocityX += GRAVITY*game.frameTime;
+
+            if(state == State.falling) jumpX -= jumpX/50;
+            this.x = x + directionX * dx;
+
             if (velocityY >= 0) {
-                if (foot + dy >= platformTop) {
+                if ((int)(foot + dy) >= (int)platformTop ) {
                     dy = platformTop - foot;
                     setState(State.idle);
                 }
             }
-//            velocityX += GRAVITY*game.frameTime;
-
-            if(state == State.falling) directionX = 1;
-            this.x = x + directionX * dx;
             this.y = y +  dy;
 
             velocityY +=  GRAVITY * game.frameTime;
+
         } else if (state == State.idle || state == State.move) {
             directionX = 1;
             directionY = 1;
@@ -181,7 +189,7 @@ public class Player implements GameObject, BoxCollidable {
         if (y < 0) {
 
             if (!bg.isLast()) {
-                y = 900;
+                y = GameView.view.getHeight()-100;
                 bg.nextimg();
                 ArrayList<GameObject> objects = game.objects;
                 for (GameObject obj : objects) {
@@ -192,7 +200,7 @@ public class Player implements GameObject, BoxCollidable {
                 }
                 game.add(new StageMap(bg.num));
             }
-        } else if (y >= 950) {
+        } else if (y >= GameView.view.getHeight()-100) {
             if (!bg.isFirst()) {
 
                 y = 10;
@@ -221,17 +229,19 @@ public class Player implements GameObject, BoxCollidable {
                 setState(State.idle);
             }
             float platformTop = findNearestPlatformTop();
-            if (foot < platformTop) {
+            Log.d(TAG,"state " + state + " foot " +(int)foot + " platformTop " +(int)platformTop );
+
+            if ((int)foot < (int)platformTop) {
                 setState(State.falling);
-                if (state != State.falling) velocityY = 0;
+                velocityY = 0;
                 velocityX = 0;
                 //this.y += 0.01;
             }
         }
 
-        if (this.x - playerWidth < 0) this.x = playerWidth;
-        else if (this.x + playerWidth > GameView.view.getWidth())
-            this.x = GameView.view.getWidth() - playerWidth;
+        if (this.x - playerWidth < 8*GameView.view.getWidth()/480) this.x = 8*GameView.view.getWidth()/480 + playerWidth;
+        else if (this.x + playerWidth > 472*GameView.view.getWidth()/480)
+            this.x = 472*GameView.view.getWidth()/480 - playerWidth;
     }
 
     private float findNearestPlatformTop() {
@@ -310,11 +320,13 @@ public class Player implements GameObject, BoxCollidable {
         if(state == State.idle) {
             setState(State.ready);
         }else{
-            //Log.d(TAG,"Not in a state that can't ready " + state);
+            //
             return;
         }
     }
+     // 43: 1003 = ? vh2
     public void jump() {
+        MainGame game =MainGame.get();
          if(state == State.ready){
             setState(State.jump);
             velocityY = -JUMPPOWERY *this.chargetime;
@@ -324,7 +336,6 @@ public class Player implements GameObject, BoxCollidable {
            //Log.d(TAG,"Not in a state that can't jump " + state);
             return;
         }
-        //Log.d(TAG,"y " + chargetime);
             this.prevchargetime = this.chargetime;
             this.chargetime = 0;
 
