@@ -8,11 +8,13 @@ import android.util.Log;
 
 import java.util.HashMap;
 
+import kr.ac.kpu.game.s2017182016.jumpman.R;
+
 public class Sound {
     private static final String TAG = Sound.class.getSimpleName();
     private static SoundPool soundPool;
     private static final int[] SOUND_IDS = {
-//            R.raw.hadouken
+            R.raw.king_bump,R.raw.king_jump,R.raw.king_land
     };
     private static HashMap<Integer, Integer> soundIdMap = new HashMap<>();
 

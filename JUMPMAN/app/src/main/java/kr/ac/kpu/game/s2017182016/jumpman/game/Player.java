@@ -3,6 +3,7 @@ package kr.ac.kpu.game.s2017182016.jumpman.game;
 import android.graphics.Canvas;
 import android.graphics.Rect;
 import android.graphics.RectF;
+import android.media.MediaPlayer;
 import android.util.Log;
 
 import java.util.ArrayList;
@@ -12,6 +13,7 @@ import kr.ac.kpu.game.s2017182016.jumpman.framework.object.Background;
 import kr.ac.kpu.game.s2017182016.jumpman.framework.iface.BoxCollidable;
 import kr.ac.kpu.game.s2017182016.jumpman.framework.iface.GameObject;
 import kr.ac.kpu.game.s2017182016.jumpman.framework.bitmap.IndexedAnimationGameBitmap;
+import kr.ac.kpu.game.s2017182016.jumpman.framework.util.Sound;
 import kr.ac.kpu.game.s2017182016.jumpman.framework.view.GameView;
 import kr.ac.kpu.game.s2017182016.jumpman.framework.view.Joystick;
 
@@ -24,6 +26,7 @@ public class Player implements GameObject, BoxCollidable {
     private static final float GRAVITY = GameView.view.getHeight()*2050/1003;
     public static final int MAX_JUMPPOWER = GameView.view.getHeight()*43/1003;
     private final Background bg;
+    private final MediaPlayer mediaPlayer;
     private float x;
     private float y;
     private final IndexedAnimationGameBitmap bitmap;
@@ -118,11 +121,14 @@ public class Player implements GameObject, BoxCollidable {
         this.bg = MainGame.bg;
         this.ground_y = y;
         this.ground_y2 = 1500;
+        mediaPlayer = MediaPlayer.create(GameView.view.getContext(),R.raw.king_jump);
+        Sound.init(GameView.view.getContext());
 
     }
 
     public void update() {
         MainGame game = MainGame.get();
+
         float foot = y + collisionOffsetRect.bottom * GameView.MULTIPLIER;
         if (state == State.ready) {
             chargetime += 60*game.frameTime*GameView.view.getHeight()/1003;
@@ -134,9 +140,11 @@ public class Player implements GameObject, BoxCollidable {
             float dy = (float) (velocityY * game.frameTime);
             float platformTop = findNearestPlatformTop();
             float dx = directionX*this.x;
+            if(state == State.falling) Log.d(TAG,"dy " + dy + " velocityY " + velocityY  );
 
             getBoundingRect(collisionRect);
             if(CollisionDetect(collisionRect)) {
+                Sound.play(R.raw.king_bump);
                 directionX = -1;
                 if(state == State.jump){
                 velocityY = -JUMPPOWERY* this.prevchargetime/2;
@@ -163,10 +171,14 @@ public class Player implements GameObject, BoxCollidable {
             if(state == State.falling) jumpX -= jumpX/50;
             this.x = x + directionX * dx;
 
+            if (this.x - playerWidth < 8*GameView.view.getWidth()/480) this.x = 8*GameView.view.getWidth()/480 + playerWidth;
+            else if (this.x + playerWidth > 472*GameView.view.getWidth()/480) this.x = 472*GameView.view.getWidth()/480 - playerWidth;
             if (velocityY >= 0) {
                 if ((int)(foot + dy) >= (int)platformTop ) {
                     dy = platformTop - foot;
                     setState(State.idle);
+                    Sound.play(R.raw.king_land);
+
                 }
             }
             this.y = y +  dy;
@@ -229,19 +241,16 @@ public class Player implements GameObject, BoxCollidable {
                 setState(State.idle);
             }
             float platformTop = findNearestPlatformTop();
-            Log.d(TAG,"state " + state + " foot " +(int)foot + " platformTop " +(int)platformTop );
 
             if ((int)foot < (int)platformTop) {
                 setState(State.falling);
-                velocityY = 0;
+                if(state != State.falling)velocityY = 0; //조건문 안걸면 추락하지않음
                 velocityX = 0;
                 //this.y += 0.01;
             }
         }
 
-        if (this.x - playerWidth < 8*GameView.view.getWidth()/480) this.x = 8*GameView.view.getWidth()/480 + playerWidth;
-        else if (this.x + playerWidth > 472*GameView.view.getWidth()/480)
-            this.x = 472*GameView.view.getWidth()/480 - playerWidth;
+
     }
 
     private float findNearestPlatformTop() {
@@ -327,7 +336,9 @@ public class Player implements GameObject, BoxCollidable {
      // 43: 1003 = ? vh2
     public void jump() {
         MainGame game =MainGame.get();
+
          if(state == State.ready){
+             Sound.play(R.raw.king_jump);
             setState(State.jump);
             velocityY = -JUMPPOWERY *this.chargetime;
             jumpX = -JUMPPOWERX *this.chargetime;
