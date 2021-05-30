@@ -79,7 +79,7 @@ public class MainGame {
         for(GameObject o : objects){
             o.draw(canvas);
         }
-        if(!BuildConfig.showsCollisionBox){
+        if(BuildConfig.showsCollisionBox){
                 for(GameObject o : objects){
                     if(!(o instanceof BoxCollidable)){
                         continue;

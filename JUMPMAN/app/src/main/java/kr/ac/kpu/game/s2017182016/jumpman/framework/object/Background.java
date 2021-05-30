@@ -27,7 +27,6 @@ public class Background implements GameObject {
             R.mipmap.bg_4,
             R.mipmap.bg_5,
             R.mipmap.bg_6,
-            R.mipmap.bg_7,
     };
     public Rect srcRect = new Rect();
     public RectF dstRect = new RectF();
