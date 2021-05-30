@@ -26,25 +26,51 @@ public class StageMap implements GameObject {
     private int columns;
     private int rows;
     private int current;
-
     public StageMap(int num){
         switch (num)
         {
             case 0:
+                createObject(0,0,7,370);
+                createObject(472,0,10,370);
                 createObject(0,180,130,180);
                 createObject(350,180,130,180);
                 createObject(130,325,220,30);
                 createObject(185,40,110,50);
                 break;
             case 1:
-                createObject(0,0,7,350);
-                createObject(472,0,10,350);
+                createObject(0,0,7,370);
+                createObject(472,0,10,370);
                 createObject(295,295,98,34);
                 createObject(407,198,65,32);
                 createObject(254,198,76,34);
                 createObject(118,102,76,65);
                 createObject(7,78,75,89);
-
+                break;
+            case 2:
+                createObject(0,0,7,370);
+                createObject(472,0,10,370);
+                createObject(207,304,50,15);
+                createObject(320,304,58,17);
+                createObject(424,255,58,15);
+                createObject(190,222,98,33);
+                createObject(288,207,49,20);
+                createObject(158,118,60,50);
+                createObject(8,96,58,17);
+                createObject(135,0,73,17);
+                break;
+            case 3:
+                createObject(0,0,7,370);
+                createObject(472,0,10,370);
+                createObject(135,319,75,42);
+                createObject(8,216,56,16);
+                createObject(135,216,75,16);
+                createObject(296,160,30,70);
+                createObject(328,72,16,88);
+                createObject(344,72,57,16);
+                createObject(432,127,42,18);
+                createObject(135,0,18,168);
+                createObject(153,88,25,80);
+                createObject(328,0,17,17);
                 break;
         }
 
