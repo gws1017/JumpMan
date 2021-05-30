@@ -52,7 +52,11 @@ public class MainGame {
         }
 
 // 180 : 480 = ? : width
-        joystick = new Joystick(400,800,100,50);
+        int cx = 70*GameView.view.getWidth()/480;
+        int cy = GameView.view.getHeight()-70*GameView.view.getHeight()/350;
+        int outRadius = GameView.view.getHeight()/20*GameView.MULTIPLIER;
+        int inRadius = GameView.view.getHeight()/20*GameView.MULTIPLIER /2;
+        joystick = new Joystick(cx,cy,outRadius,inRadius);
         bg = new Background(R.mipmap.bg_1);
         objects.add(bg);
         objects.add(joystick);
@@ -75,7 +79,7 @@ public class MainGame {
         for(GameObject o : objects){
             o.draw(canvas);
         }
-        if(BuildConfig.showsCollisionBox){
+        if(!BuildConfig.showsCollisionBox){
                 for(GameObject o : objects){
                     if(!(o instanceof BoxCollidable)){
                         continue;
