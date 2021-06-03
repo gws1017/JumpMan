@@ -203,14 +203,12 @@ public class Player implements GameObject, BoxCollidable {
             if (!bg.isLast()) {
                 y = GameView.view.getHeight()-100;
                 bg.nextimg();
-                ArrayList<GameObject> objects = game.objects;
-                for (GameObject obj : objects) {
-                    if (obj instanceof Platform) {
-                        Platform platform = (Platform) obj;
-                        game.remove(platform);
-                    }
+                ArrayList<GameObject> platforms = game.objectsAt(MainGame.Layer.platform);
+                for (GameObject obj : platforms) {
+                    Platform platform = (Platform) obj;
+                    game.remove(platform);
                 }
-                game.add(new StageMap(bg.num));
+                game.add(MainGame.Layer.controller,new StageMap(bg.num));
             }
         } else if (y >= GameView.view.getHeight()-100) {
             if (!bg.isFirst()) {
@@ -218,14 +216,13 @@ public class Player implements GameObject, BoxCollidable {
                 y = 10;
                 bg.previmg();
                 setState(State.jump);
-                ArrayList<GameObject> objects = game.objects;
-                for (GameObject obj : objects) {
-                    if (obj instanceof Platform) {
-                        Platform platform = (Platform) obj;
-                        game.remove(platform);
-                    }
+                ArrayList<GameObject> platforms = game.objectsAt(MainGame.Layer.platform);
+                for (GameObject obj : platforms) {
+                    Platform platform = (Platform) obj;
+                    game.remove(platform);
                 }
-                game.add(new StageMap(bg.num));
+                game.add(MainGame.Layer.controller,new StageMap(bg.num));
+
             }
         }
 
@@ -255,34 +252,32 @@ public class Player implements GameObject, BoxCollidable {
 
     private float findNearestPlatformTop() {
         MainGame game = (MainGame) MainGame.get();
-        ArrayList<GameObject> objects = game.objects;
+        ArrayList<GameObject> platforms = game.objectsAt(MainGame.Layer.platform);
         float top = GameView.view.getHeight();
-        for (GameObject obj : objects) {
-            if (obj instanceof Platform) {
-                Platform platform = (Platform) obj;
-                RectF rect = platform.getBoundingRect();
+        for (GameObject obj : platforms) {
+            Platform platform = (Platform) obj;
+            RectF rect = platform.getBoundingRect();
 
-                if (rect.left > x || x > rect.right) {
-                    continue;
-                }
-                if (rect.top < y) {
-                    continue;
-                }
-                if (top > rect.top) {
-                    top = rect.top;
-                }
-
+            if (rect.left > x || x > rect.right) {
+                continue;
             }
+            if (rect.top < y) {
+                continue;
+            }
+            if (top > rect.top) {
+                top = rect.top;
+            }
+
         }
+
         return top;
     }
 
     boolean CollisionDetect(RectF rect) {
         MainGame game = (MainGame) MainGame.get();
-        ArrayList<GameObject> objects = game.objects;
+        ArrayList<GameObject> platforms = game.objectsAt(MainGame.Layer.platform);
         float top = GameView.view.getHeight();
-        for (GameObject obj : objects) {
-            if (obj instanceof Platform) {
+        for (GameObject obj : platforms) {
                 Platform platform = (Platform) obj;
                 RectF rect2 = platform.getBoundingRect();
                 if (rect.right < rect2.left || rect.left > rect2.right) continue;
@@ -292,7 +287,6 @@ public class Player implements GameObject, BoxCollidable {
                     if(rect.right < rect2.left && rect.right > rect2.right) directionX = -1;
                 }
                 return true;
-            }
         }
         return false;
     }

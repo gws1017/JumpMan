@@ -10,88 +10,73 @@ import java.util.ArrayList;
 
 import kr.ac.kpu.game.s2017182016.jumpman.BuildConfig;
 import kr.ac.kpu.game.s2017182016.jumpman.R;
+import kr.ac.kpu.game.s2017182016.jumpman.framework.game.BaseGame;
 import kr.ac.kpu.game.s2017182016.jumpman.framework.iface.BoxCollidable;
 import kr.ac.kpu.game.s2017182016.jumpman.framework.iface.GameObject;
 import kr.ac.kpu.game.s2017182016.jumpman.framework.object.Background;
 import kr.ac.kpu.game.s2017182016.jumpman.framework.view.GameView;
 import kr.ac.kpu.game.s2017182016.jumpman.framework.view.Joystick;
 
-public class MainGame {
+public class MainGame extends BaseGame {
 
-    public static MainGame instance;
     public static Background bg;
     private Player player;
     private Joystick joystick;
-    private RectF collisionRect;
-    private Paint collisionPaint;
 
-    protected MainGame(){
-        instance = this;
-        if(BuildConfig.showsCollisionBox){
-            collisionRect = new RectF();
-            collisionPaint = new Paint();
-            collisionPaint.setStyle(Paint.Style.STROKE);
-            collisionPaint.setColor(Color.RED);
-        }
+    public enum Layer{
+        bg,player,platform,controller,LAYER_COUNT
     }
     public static MainGame get(){
-        if(instance == null){
-            instance = new MainGame();
-        }
-        return instance;
+        return (MainGame) instance;
+    }
+
+    public ArrayList<GameObject> objectsAt(Layer layer) {
+        return objectsAt(layer.ordinal());
+    }
+    public void add(Layer layer, GameObject obj){
+        add(layer.ordinal(),obj);
     }
 
 
-    ArrayList<GameObject> objects = new ArrayList<>();
-    public static float frameTime;
     private boolean initialized;
 
-    public void initResources(){
+    @Override
+    public boolean initResources(){
         if(initialized){
-            return;
+            return false;
         }
 
 // 180 : 480 = ? : width
-        int cx = 70*GameView.view.getWidth()/480;
-        int cy = GameView.view.getHeight()-70*GameView.view.getHeight()/350;
-        int outRadius = GameView.view.getHeight()/20*GameView.MULTIPLIER;
-        int inRadius = GameView.view.getHeight()/20*GameView.MULTIPLIER /2;
-        joystick = new Joystick(cx,cy,outRadius,inRadius);
-        bg = new Background(R.mipmap.bg_1);
-        objects.add(bg);
-        objects.add(joystick);
-        int w = GameView.view.getWidth();//GameView.view.getWidth();//배경이 그려지는위치를 가져오기
+        int w = GameView.view.getWidth();
         int h = GameView.view.getHeight();
-        objects.add(new StageMap(bg.num));
+        initLayers(Layer.LAYER_COUNT.ordinal());
+
+        //joystick
+        int cx = 70*w/480;
+        int cy = h-70*h/350;
+        int outRadius = h/20*GameView.MULTIPLIER;
+        int inRadius = h/20*GameView.MULTIPLIER /2;
+
+        bg = new Background(R.mipmap.bg_1);
+        add(Layer.bg,bg);
+        joystick = new Joystick(cx,cy,outRadius,inRadius);
+        add(Layer.controller,joystick);
+        add(Layer.controller,new StageMap(bg.num));
+
         player = new Player(w/2,h-140,joystick);
-        objects.add(player);
+        add(Layer.player,player);
+
         initialized = true;
+        return true;
     }
 
+    @Override
     public void update() {
-        if(!initialized) return;
-        for(GameObject o : objects){
-            o.update();
-        }
-
-    }
-    public void draw(Canvas canvas){
-        for(GameObject o : objects){
-            o.draw(canvas);
-        }
-        if(BuildConfig.showsCollisionBox){
-                for(GameObject o : objects){
-                    if(!(o instanceof BoxCollidable)){
-                        continue;
-                    }
-                    ((BoxCollidable)o).getBoundingRect(collisionRect);
-                    canvas.drawRect(collisionRect,collisionPaint);
-                }
-
-        }
+       super.update();
     }
 
 
+    @Override
     public boolean onTouchEvent(MotionEvent event){
         switch(event.getAction()){
             case MotionEvent.ACTION_DOWN:
@@ -115,22 +100,5 @@ public class MainGame {
         }
         return false;
     }
-    public void add(GameObject gameObject) {
-        GameView.view.post(new Runnable() {
-            @Override
-            public void run() {
-                objects.add(gameObject);
-            }
-        });
 
-    }
-    public void remove(GameObject gameObject){
-        GameView.view.post(new Runnable() {
-            @Override
-            public void run() {
-                objects.remove(gameObject);
-            }
-        });
-
-    }
 }

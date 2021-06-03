@@ -145,15 +145,16 @@ public class StageMap implements GameObject {
     private void createObject() {
         MainGame game = (MainGame) MainGame.get();
 
-        game.add(new Platform(0,180*viewHeight/imageHeight,130*viewWidth/imageWidth,viewHeight));
-        game.add(new Platform(viewWidth,180*viewHeight/imageHeight,-130*viewWidth/imageWidth,viewHeight));
+        game.add(MainGame.Layer.platform,new Platform(0,180*viewHeight/imageHeight,130*viewWidth/imageWidth,viewHeight));
+        game.add(MainGame.Layer.platform,new Platform(viewWidth,180*viewHeight/imageHeight,-130*viewWidth/imageWidth,viewHeight));
 
 
     }
 
     private void createObject(float x, float y,int w, int h) {
         MainGame game = (MainGame) MainGame.get();
-        game.add(new Platform(x*viewWidth/imageWidth,y*viewHeight/imageHeight,w*viewWidth/imageWidth,h*viewHeight/imageHeight));
+        Platform platform = new Platform(x*viewWidth/imageWidth,y*viewHeight/imageHeight,w*viewWidth/imageWidth,h*viewHeight/imageHeight);
+        game.add(MainGame.Layer.platform,platform);
     }
 
     private char getAt(int x, int y) {
