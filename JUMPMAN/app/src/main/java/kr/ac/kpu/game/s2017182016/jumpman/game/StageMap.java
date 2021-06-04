@@ -17,8 +17,8 @@ public class StageMap implements GameObject {
     private MainGame game = MainGame.get();
     private int viewWidth = GameView.view.getWidth();
     private int viewHeight = GameView.view.getHeight();
-    private int imageWidth = game.bg.bitmap.getWidth();
-    private int imageHeight = game.bg.bitmap.getHeight();
+    private int imageWidth = 480;
+    private int imageHeight = 360;
     private int columns;
     private int rows;
     private int current;
@@ -28,9 +28,10 @@ public class StageMap implements GameObject {
             case 0:
                 createObject(0,0,7,370);
                 createObject(472,0,10,370);
-                createObject(0,184,130,180);
+                createObject(0,184,130,108);
+                createObject(0,283,75,90);
                 createObject(350,184,130,180);
-                createObject(130,325,220,30);
+                createObject(0,325,480,30);
                 createObject(185,40,110,50);
                 break;
             case 1:

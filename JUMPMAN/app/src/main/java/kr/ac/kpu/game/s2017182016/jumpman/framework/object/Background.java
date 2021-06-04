@@ -19,46 +19,36 @@ public class Background implements GameObject {
 //    private static int imageHeight;
 //    private static int bgLeft;
 //    private static int bgRight;
-    public static Bitmap bitmap;
-    private int[] maps= {
-            R.mipmap.bg_1,
-            R.mipmap.bg_2,
-            R.mipmap.bg_3,
-            R.mipmap.bg_4,
-            R.mipmap.bg_5,
-            R.mipmap.bg_6,
+    public static Bitmap bgbitmap;
+    private int[] backmaps = {
+            R.mipmap.transparent,
+            R.mipmap.transparent,
+            R.mipmap.transparent,
+            R.mipmap.bg4,
+            R.mipmap.bg5,
+            R.mipmap.bg6,
     };
+
+
     public Rect srcRect = new Rect();
     public RectF dstRect = new RectF();
     public int num = 0;
 
     public Background(int resId){
-        bitmap = GameBitmap.load(resId);
-        int w = bitmap.getWidth();
-        int h = bitmap.getHeight();
-        srcRect.set(0,0,w,h);
-        float l = 0;
-        float t = 0;
-        float b = GameView.view.getHeight();
-        float r = GameView.view.getWidth();
 
-        dstRect.set(l,t,r,b);
-//        if(bitmap == null)
-//        {
-//            Resources res = GameView.view.getResources();
-//            bitmap = BitmapFactory.decodeResource(res, R.mipmap.bg_1);
-//
-//            w = GameView.view.getWidth();
-//            h = GameView.view.getHeight();
-//
-//            imageWidth = bitmap.getWidth();
-//            imageHeight = bitmap.getHeight();
-//
-//            bgLeft = w/2 - imageWidth*MAG/2;
-//            bgRight = w/2 + imageWidth*MAG/2;
-//            dstRect = new Rect(bgLeft,0,bgRight,h);
-//
-//        }
+        if(backmaps[num] != 0) {
+            bgbitmap = GameBitmap.load(backmaps[num]);
+            int w = bgbitmap.getWidth();
+            int h = bgbitmap.getHeight();
+            srcRect.set(0,0,w,h);
+            float l = 0;
+            float t = 0;
+            float b = GameView.view.getHeight();
+            float r = GameView.view.getWidth();
+
+            dstRect.set(l,t,r,b);
+        }
+
     }
 
     @Override
@@ -68,17 +58,19 @@ public class Background implements GameObject {
 
     @Override
     public void draw(Canvas canvas) {
-        canvas.drawBitmap(bitmap,srcRect,dstRect,null);
+        if(num>2) canvas.drawBitmap(bgbitmap,srcRect,dstRect,null);
     }
 
     public void nextimg() {
-        this.bitmap = GameBitmap.load(maps[++num]);
+        ++num;
+        if(backmaps[num]!= 0)this.bgbitmap = GameBitmap.load(backmaps[num]);
     }
     public void previmg() {
-        this.bitmap = GameBitmap.load(maps[--num]);
+        --num;
+        if(backmaps[num]!= 0)this.bgbitmap = GameBitmap.load(backmaps[num]);
     }
     public boolean isLast() {
-        if( num< maps.length -1 ) return false;
+        if( num< backmaps.length -1 ) return false;
         else return true;
     }
 

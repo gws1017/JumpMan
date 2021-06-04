@@ -10,6 +10,7 @@ import kr.ac.kpu.game.s2017182016.jumpman.framework.game.Scene;
 import kr.ac.kpu.game.s2017182016.jumpman.framework.iface.GameObject;
 import kr.ac.kpu.game.s2017182016.jumpman.framework.object.Background;
 import kr.ac.kpu.game.s2017182016.jumpman.framework.object.ImageObject;
+import kr.ac.kpu.game.s2017182016.jumpman.framework.object.Midground;
 import kr.ac.kpu.game.s2017182016.jumpman.framework.util.Sound;
 import kr.ac.kpu.game.s2017182016.jumpman.framework.view.GameView;
 import kr.ac.kpu.game.s2017182016.jumpman.game.scenes.main.MainGame;
@@ -38,7 +39,7 @@ public class TitleScene extends Scene {
         initLayers(Layer.COUNT.ordinal());
 
 
-        add(Layer.bg, new Background(R.mipmap.title_bg));
+        add(Layer.bg, new Midground(R.mipmap.title_bg));
         int lx = (iw/2) * w / iw ;
         int ly = (82) * h / ih;
 

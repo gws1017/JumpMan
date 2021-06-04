@@ -13,6 +13,8 @@ import kr.ac.kpu.game.s2017182016.jumpman.framework.object.Background;
 import kr.ac.kpu.game.s2017182016.jumpman.framework.iface.BoxCollidable;
 import kr.ac.kpu.game.s2017182016.jumpman.framework.iface.GameObject;
 import kr.ac.kpu.game.s2017182016.jumpman.framework.bitmap.IndexedAnimationGameBitmap;
+import kr.ac.kpu.game.s2017182016.jumpman.framework.object.Foreground;
+import kr.ac.kpu.game.s2017182016.jumpman.framework.object.Midground;
 import kr.ac.kpu.game.s2017182016.jumpman.framework.util.Sound;
 import kr.ac.kpu.game.s2017182016.jumpman.framework.view.GameView;
 import kr.ac.kpu.game.s2017182016.jumpman.framework.view.Joystick;
@@ -28,6 +30,8 @@ public class Player implements GameObject, BoxCollidable {
     private static final float GRAVITY = GameView.view.getHeight()*2050/1003;
     public static final int MAX_JUMPPOWER = GameView.view.getHeight()*43/1003;
     private final Background bg;
+    private final Midground mg;
+    private final Foreground fg;
     private float x;
     private float y;
     private final IndexedAnimationGameBitmap bitmap;
@@ -120,6 +124,8 @@ public class Player implements GameObject, BoxCollidable {
         setState(State.idle);
         this.joystick = joystick;
         this.bg = MainScene.bg;
+        this.mg = MainScene.mg;
+        this.fg = MainScene.fg;
         this.ground_y = y;
         this.ground_y2 = 1500;
         Sound.init(GameView.view.getContext());
@@ -140,10 +146,10 @@ public class Player implements GameObject, BoxCollidable {
             float dy = (float) (velocityY * game.frameTime);
             float platformTop = findNearestPlatformTop();
             float dx = directionX*this.x;
-            if(state == State.falling) Log.d(TAG,"dy " + dy + " velocityY " + velocityY  );
 
             getBoundingRect(collisionRect);
             if(CollisionDetect(collisionRect)) {
+                
                 Sound.play(R.raw.king_bump);
                 directionX = -1;
                 if(state == State.jump){
@@ -200,28 +206,32 @@ public class Player implements GameObject, BoxCollidable {
         //맵이동
         if (y < 0) {
 
-            if (!bg.isLast()) {
+            if (!mg.isLast()) {
                 y = GameView.view.getHeight()-100;
                 bg.nextimg();
+                mg.nextimg();
+                fg.nextimg();
                 ArrayList<GameObject> platforms = MainScene.scene.objectsAt(MainScene.Layer.platform);
                 for (GameObject obj : platforms) {
                     Platform platform = (Platform) obj;
                     MainScene.scene.remove(platform);
                 }
-                scene.add(MainScene.Layer.controller,new StageMap(bg.num));
+                scene.add(MainScene.Layer.controller,new StageMap(mg.num));
             }
         } else if (y >= GameView.view.getHeight()-100) {
-            if (!bg.isFirst()) {
+            if (!mg.isFirst()) {
 
                 y = 10;
                 bg.previmg();
+                mg.previmg();
+                fg.previmg();
                 setState(State.jump);
                 ArrayList<GameObject> platforms = MainScene.scene.objectsAt(MainScene.Layer.platform);
                 for (GameObject obj : platforms) {
                     Platform platform = (Platform) obj;
                     scene.remove(platform);
                 }
-                scene.add(MainScene.Layer.controller,new StageMap(bg.num));
+                scene.add(MainScene.Layer.controller,new StageMap(mg.num));
 
             }
         }
