@@ -40,7 +40,6 @@ public class Sound {
         }
     }
     public static int play(int resId) {
-        Log.d(TAG, "play: " + resId);
         int soundId = soundIdMap.get(resId);
         int streamId = soundPool.play(soundId, 1f, 1f, 1, 0, 1f);
         return streamId;

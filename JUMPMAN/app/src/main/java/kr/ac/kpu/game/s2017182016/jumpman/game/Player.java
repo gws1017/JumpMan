@@ -151,12 +151,13 @@ public class Player implements GameObject, BoxCollidable {
             if(CollisionDetect(collisionRect)) {
                 
                 Sound.play(R.raw.king_bump);
-                directionX = -1;
+                directionX *= -1;
                 if(state == State.jump){
                 velocityY = -JUMPPOWERY* this.prevchargetime/2;
                 dy = (float) (velocityY * game.frameTime);
                 this.prevchargetime = 0;
                 }
+                Log.d(TAG,"dx " + jumpX*game.frameTime+" directionX " + directionX +" state "+state);
             }
 
             if (isInverse == 1) {
@@ -183,6 +184,7 @@ public class Player implements GameObject, BoxCollidable {
                 if ((int)(foot + dy) >= (int)platformTop ) {
                     dy = platformTop - foot;
                     setState(State.idle);
+                    directionX = 1;
                     Sound.play(R.raw.king_land);
 
                 }
@@ -292,10 +294,7 @@ public class Player implements GameObject, BoxCollidable {
                 RectF rect2 = platform.getBoundingRect();
                 if (rect.right < rect2.left || rect.left > rect2.right) continue;
                 if (rect.top < rect2.top || rect.bottom > rect2.bottom) continue;
-                if(state == State.jump){
-                    if(rect.left < rect2.right && rect.left > rect2.left) directionX = -1;
-                    if(rect.right < rect2.left && rect.right > rect2.right) directionX = -1;
-                }
+               
                 return true;
         }
         return false;
