@@ -62,7 +62,7 @@ public class MainScene extends Scene {
 
         //joystick
         int cx = 70*w/480;
-        int cy = h-70*h/350;
+        int cy = h-70*h/360;
         int outRadius = h/20*GameView.MULTIPLIER;
         int inRadius = h/20*GameView.MULTIPLIER /2;
 
@@ -76,7 +76,7 @@ public class MainScene extends Scene {
         add(Layer.controller,joystick);
         add(Layer.controller,new StageMap(mg.num));
 
-        player = new Player(w/2,h-140,joystick);
+        player = new Player(w/2,h-(50)*h/360,joystick);
         add(Layer.player,player);
 
     }
