@@ -49,7 +49,6 @@ public class TitleScene extends Scene {
         int ty = (231) * h / ih;
 
         add(Layer.logo,new ImageObject(R.mipmap.title_text,tx,ty));
-       Sound.play(R.raw.menu_intro,80,1);
         float volume = 1.f;
 
 //        titleBgm.setVolume(volume,volume);
