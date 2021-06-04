@@ -1,23 +1,19 @@
-package kr.ac.kpu.game.s2017182016.jumpman.game;
+package kr.ac.kpu.game.s2017182016.jumpman.game.scenes.main;
 
-import android.graphics.Canvas;
-import android.graphics.Color;
-import android.graphics.Paint;
-import android.graphics.RectF;
 import android.view.MotionEvent;
 
 import java.util.ArrayList;
 
-import kr.ac.kpu.game.s2017182016.jumpman.BuildConfig;
 import kr.ac.kpu.game.s2017182016.jumpman.R;
-import kr.ac.kpu.game.s2017182016.jumpman.framework.game.BaseGame;
-import kr.ac.kpu.game.s2017182016.jumpman.framework.iface.BoxCollidable;
+import kr.ac.kpu.game.s2017182016.jumpman.framework.game.Scene;
 import kr.ac.kpu.game.s2017182016.jumpman.framework.iface.GameObject;
 import kr.ac.kpu.game.s2017182016.jumpman.framework.object.Background;
 import kr.ac.kpu.game.s2017182016.jumpman.framework.view.GameView;
 import kr.ac.kpu.game.s2017182016.jumpman.framework.view.Joystick;
+import kr.ac.kpu.game.s2017182016.jumpman.game.Player;
+import kr.ac.kpu.game.s2017182016.jumpman.game.StageMap;
 
-public class MainGame extends BaseGame {
+public class MainScene extends Scene {
 
     public static Background bg;
     private Player player;
@@ -26,25 +22,19 @@ public class MainGame extends BaseGame {
     public enum Layer{
         bg,player,platform,controller,LAYER_COUNT
     }
-    public static MainGame get(){
-        return (MainGame) instance;
-    }
 
+    public static MainScene scene;
+    public void add(Layer layer, GameObject obj) {
+        add(layer.ordinal(), obj);
+    }
     public ArrayList<GameObject> objectsAt(Layer layer) {
         return objectsAt(layer.ordinal());
     }
-    public void add(Layer layer, GameObject obj){
-        add(layer.ordinal(),obj);
-    }
-
-
-    private boolean initialized;
 
     @Override
-    public boolean initResources(){
-        if(initialized){
-            return false;
-        }
+    public void start(){
+        scene = this;
+        super.start();
 
 // 180 : 480 = ? : width
         int w = GameView.view.getWidth();
@@ -66,14 +56,8 @@ public class MainGame extends BaseGame {
         player = new Player(w/2,h-140,joystick);
         add(Layer.player,player);
 
-        initialized = true;
-        return true;
     }
 
-    @Override
-    public void update() {
-       super.update();
-    }
 
 
     @Override

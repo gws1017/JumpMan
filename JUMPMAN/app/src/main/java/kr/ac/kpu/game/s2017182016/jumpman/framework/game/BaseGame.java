@@ -4,6 +4,7 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.RectF;
+import android.util.Log;
 import android.view.MotionEvent;
 
 import java.util.ArrayList;
@@ -36,8 +37,54 @@ public class BaseGame {
             collisionPaint.setColor(Color.RED);
         }
     }
-    ArrayList<ArrayList<GameObject>> layers;
+//    ArrayList<ArrayList<GameObject>> layers;
     private static HashMap<Class, ArrayList<GameObject>> recycleBin = new HashMap<>();
+    ArrayList<Scene> sceneStack = new ArrayList<>();
+    public Scene getTopScene() {
+        int lastIndex = sceneStack.size() - 1;
+        if (lastIndex < 0) return null;
+        return sceneStack.get(lastIndex);
+    }
+    public void start(Scene scene) {
+        int lastIndex = sceneStack.size() - 1;
+        if (lastIndex >= 0) {
+            Scene top = sceneStack.remove(lastIndex);
+            Log.d(TAG, "Ending(in start): " + top);
+            top.end();
+            sceneStack.set(lastIndex, scene);
+        } else {
+            sceneStack.add(scene);
+        }
+        Log.d(TAG, "Starting(in start): " + scene);
+        scene.start();
+    }
+    public void push(Scene scene) {
+        int lastIndex = sceneStack.size() - 1;
+        if (lastIndex >= 0) {
+            Scene top = sceneStack.get(lastIndex);
+            Log.d(TAG, "Pausing: " + top);
+            top.pause();
+        }
+        sceneStack.add(scene);
+        Log.d(TAG, "Starting(in push): " + scene);
+        scene.start();
+    }
+    public void popScene() {
+        int lastIndex = sceneStack.size() - 1;
+        if (lastIndex >= 0) {
+            Scene top = sceneStack.remove(lastIndex);
+            Log.d(TAG, "Ending(in pop): " + top);
+            top.end();
+        }
+        lastIndex--;
+        if (lastIndex >= 0) {
+            Scene top = sceneStack.get(lastIndex);
+            Log.d(TAG, "Resuming: " + top);
+            top.resume();
+        } else {
+            Log.e(TAG, "should end app in popScene()");
+        }
+    }
 
     public void recycle(GameObject object) {
         Class clazz = object.getClass();
@@ -59,15 +106,10 @@ public class BaseGame {
         return true;
     }
 
-    protected void initLayers(int layerCount) {
-        layers = new ArrayList<>();
-        for (int i = 0; i < layerCount; i++) {
-            layers.add(new ArrayList<>());
-        }
-    }
 
 
     public void update() {
+        ArrayList<ArrayList<GameObject>> layers = getTopScene().getLayers();
         for (ArrayList<GameObject> objects: layers) {
             for (GameObject o : objects) {
                 o.update();
@@ -76,6 +118,7 @@ public class BaseGame {
 
     }
     public void draw(Canvas canvas){
+        ArrayList<ArrayList<GameObject>> layers = getTopScene().getLayers();
         for (ArrayList<GameObject> objects: layers) {
             for (GameObject o : objects) {
                 o.draw(canvas);
@@ -96,45 +139,6 @@ public class BaseGame {
 
 
     public boolean onTouchEvent(MotionEvent event) {
-        return false;
-    }
-
-    public void add(int layerIndex, GameObject gameObject) {
-        GameView.view.post(new Runnable() {
-            @Override
-            public void run() {
-                ArrayList<GameObject> objects = layers.get(layerIndex);
-                objects.add(gameObject);
-            }
-        });
-    }
-    public void remove(GameObject gameObject) {
-        remove(gameObject, true);
-    }
-    public void remove(GameObject gameObject, boolean delayed) {
-        Runnable runnable = new Runnable() {
-            @Override
-            public void run() {
-                for (ArrayList<GameObject> objects: layers) {
-                    boolean removed = objects.remove(gameObject);
-                    if (removed) {
-                        if (gameObject instanceof Recyclable) {
-                            ((Recyclable) gameObject).recycle();
-                            recycle(gameObject);
-                        }
-                        //Log.d(TAG, "Removed: " + gameObject);
-                        break;
-                    }
-                }
-            }
-        };
-        if (delayed) {
-            GameView.view.post(runnable);
-        } else {
-            runnable.run();
-        }
-    }
-    public ArrayList<GameObject> objectsAt(int layerIndex) {
-        return layers.get(layerIndex);
+        return getTopScene().onTouchEvent(event);
     }
 }

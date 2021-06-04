@@ -1,17 +1,13 @@
 package kr.ac.kpu.game.s2017182016.jumpman.game;
 
-import android.content.res.AssetManager;
 import android.graphics.Canvas;
-import android.util.Log;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.util.ArrayList;
 
 import kr.ac.kpu.game.s2017182016.jumpman.framework.iface.GameObject;
 import kr.ac.kpu.game.s2017182016.jumpman.framework.view.GameView;
+import kr.ac.kpu.game.s2017182016.jumpman.game.scenes.main.MainGame;
+import kr.ac.kpu.game.s2017182016.jumpman.game.scenes.main.MainScene;
 
 
 public class StageMap implements GameObject {
@@ -144,17 +140,19 @@ public class StageMap implements GameObject {
 
     private void createObject() {
         MainGame game = (MainGame) MainGame.get();
-
-        game.add(MainGame.Layer.platform,new Platform(0,180*viewHeight/imageHeight,130*viewWidth/imageWidth,viewHeight));
-        game.add(MainGame.Layer.platform,new Platform(viewWidth,180*viewHeight/imageHeight,-130*viewWidth/imageWidth,viewHeight));
+        MainScene scene = MainScene.scene;
+        scene.add(MainScene.Layer.platform,new Platform(0,180*viewHeight/imageHeight,130*viewWidth/imageWidth,viewHeight));
+        scene.add(MainScene.Layer.platform,new Platform(viewWidth,180*viewHeight/imageHeight,-130*viewWidth/imageWidth,viewHeight));
 
 
     }
 
     private void createObject(float x, float y,int w, int h) {
         MainGame game = (MainGame) MainGame.get();
+        MainScene scene = MainScene.scene;
+
         Platform platform = new Platform(x*viewWidth/imageWidth,y*viewHeight/imageHeight,w*viewWidth/imageWidth,h*viewHeight/imageHeight);
-        game.add(MainGame.Layer.platform,platform);
+        scene.add(MainScene.Layer.platform,platform);
     }
 
     private char getAt(int x, int y) {

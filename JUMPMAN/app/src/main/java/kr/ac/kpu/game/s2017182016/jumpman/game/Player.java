@@ -16,6 +16,8 @@ import kr.ac.kpu.game.s2017182016.jumpman.framework.bitmap.IndexedAnimationGameB
 import kr.ac.kpu.game.s2017182016.jumpman.framework.util.Sound;
 import kr.ac.kpu.game.s2017182016.jumpman.framework.view.GameView;
 import kr.ac.kpu.game.s2017182016.jumpman.framework.view.Joystick;
+import kr.ac.kpu.game.s2017182016.jumpman.game.scenes.main.MainGame;
+import kr.ac.kpu.game.s2017182016.jumpman.game.scenes.main.MainScene;
 
 public class Player implements GameObject, BoxCollidable {
 
@@ -26,7 +28,6 @@ public class Player implements GameObject, BoxCollidable {
     private static final float GRAVITY = GameView.view.getHeight()*2050/1003;
     public static final int MAX_JUMPPOWER = GameView.view.getHeight()*43/1003;
     private final Background bg;
-    private final MediaPlayer mediaPlayer;
     private float x;
     private float y;
     private final IndexedAnimationGameBitmap bitmap;
@@ -118,17 +119,16 @@ public class Player implements GameObject, BoxCollidable {
         this.isInverse = -1;
         setState(State.idle);
         this.joystick = joystick;
-        this.bg = MainGame.bg;
+        this.bg = MainScene.bg;
         this.ground_y = y;
         this.ground_y2 = 1500;
-        mediaPlayer = MediaPlayer.create(GameView.view.getContext(),R.raw.king_jump);
         Sound.init(GameView.view.getContext());
 
     }
 
     public void update() {
         MainGame game = MainGame.get();
-
+        MainScene scene =MainScene.scene;
         float foot = y + collisionOffsetRect.bottom * GameView.MULTIPLIER;
         if (state == State.ready) {
             chargetime += 60*game.frameTime*GameView.view.getHeight()/1003;
@@ -203,12 +203,12 @@ public class Player implements GameObject, BoxCollidable {
             if (!bg.isLast()) {
                 y = GameView.view.getHeight()-100;
                 bg.nextimg();
-                ArrayList<GameObject> platforms = game.objectsAt(MainGame.Layer.platform);
+                ArrayList<GameObject> platforms = MainScene.scene.objectsAt(MainScene.Layer.platform);
                 for (GameObject obj : platforms) {
                     Platform platform = (Platform) obj;
-                    game.remove(platform);
+                    MainScene.scene.remove(platform);
                 }
-                game.add(MainGame.Layer.controller,new StageMap(bg.num));
+                scene.add(MainScene.Layer.controller,new StageMap(bg.num));
             }
         } else if (y >= GameView.view.getHeight()-100) {
             if (!bg.isFirst()) {
@@ -216,12 +216,12 @@ public class Player implements GameObject, BoxCollidable {
                 y = 10;
                 bg.previmg();
                 setState(State.jump);
-                ArrayList<GameObject> platforms = game.objectsAt(MainGame.Layer.platform);
+                ArrayList<GameObject> platforms = MainScene.scene.objectsAt(MainScene.Layer.platform);
                 for (GameObject obj : platforms) {
                     Platform platform = (Platform) obj;
-                    game.remove(platform);
+                    scene.remove(platform);
                 }
-                game.add(MainGame.Layer.controller,new StageMap(bg.num));
+                scene.add(MainScene.Layer.controller,new StageMap(bg.num));
 
             }
         }
@@ -252,7 +252,7 @@ public class Player implements GameObject, BoxCollidable {
 
     private float findNearestPlatformTop() {
         MainGame game = (MainGame) MainGame.get();
-        ArrayList<GameObject> platforms = game.objectsAt(MainGame.Layer.platform);
+        ArrayList<GameObject> platforms = MainScene.scene.objectsAt(MainScene.Layer.platform);
         float top = GameView.view.getHeight();
         for (GameObject obj : platforms) {
             Platform platform = (Platform) obj;
@@ -275,7 +275,7 @@ public class Player implements GameObject, BoxCollidable {
 
     boolean CollisionDetect(RectF rect) {
         MainGame game = (MainGame) MainGame.get();
-        ArrayList<GameObject> platforms = game.objectsAt(MainGame.Layer.platform);
+        ArrayList<GameObject> platforms = MainScene.scene.objectsAt(MainScene.Layer.platform);
         float top = GameView.view.getHeight();
         for (GameObject obj : platforms) {
                 Platform platform = (Platform) obj;

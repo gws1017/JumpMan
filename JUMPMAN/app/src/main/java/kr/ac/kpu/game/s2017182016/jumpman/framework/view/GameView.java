@@ -12,7 +12,6 @@ import androidx.annotation.Nullable;
 
 import kr.ac.kpu.game.s2017182016.jumpman.framework.game.BaseGame;
 import kr.ac.kpu.game.s2017182016.jumpman.framework.util.Sound;
-import kr.ac.kpu.game.s2017182016.jumpman.game.MainGame;
 
 public class GameView extends View {
 
