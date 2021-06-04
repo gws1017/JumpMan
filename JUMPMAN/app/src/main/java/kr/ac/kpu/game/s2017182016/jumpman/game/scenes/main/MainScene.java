@@ -1,5 +1,6 @@
 package kr.ac.kpu.game.s2017182016.jumpman.game.scenes.main;
 
+import android.media.MediaPlayer;
 import android.view.MotionEvent;
 
 import java.util.ArrayList;
@@ -18,7 +19,9 @@ public class MainScene extends Scene {
     public static Background bg;
     private Player player;
     private Joystick joystick;
+    private MediaPlayer openingBgm;
 
+    private MediaPlayer forsetBgm;
     public enum Layer{
         bg,player,platform,controller,LAYER_COUNT
     }
@@ -40,6 +43,17 @@ public class MainScene extends Scene {
         int w = GameView.view.getWidth();
         int h = GameView.view.getHeight();
         initLayers(Layer.LAYER_COUNT.ordinal());
+        openingBgm = MediaPlayer.create(GameView.view.getContext(),R.raw.opening_theme);
+        forsetBgm = MediaPlayer.create(GameView.view.getContext(),R.raw.nb_troll_forest);
+        openingBgm.start();
+        openingBgm.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+            @Override
+            public void onCompletion(MediaPlayer mp) {
+                forsetBgm.setLooping(true);
+                forsetBgm.start();
+            }
+        });
+
 
         //joystick
         int cx = 70*w/480;

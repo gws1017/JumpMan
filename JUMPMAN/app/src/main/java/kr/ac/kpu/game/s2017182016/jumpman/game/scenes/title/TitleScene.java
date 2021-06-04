@@ -24,7 +24,6 @@ public class TitleScene extends Scene {
     }
     public static TitleScene scene;
     MediaPlayer titleBgm;
-    MediaPlayer openingBgm;
     public void add(Layer layer, GameObject obj) {
         add(layer.ordinal(), obj);
     }
@@ -36,7 +35,6 @@ public class TitleScene extends Scene {
         int iw = 480;
         int ih = 350;
         titleBgm = MediaPlayer.create(GameView.view.getContext(),R.raw.menu_intro);
-        openingBgm = MediaPlayer.create(GameView.view.getContext(),R.raw.opening_theme);
         initLayers(Layer.COUNT.ordinal());
 
 
@@ -63,7 +61,6 @@ public class TitleScene extends Scene {
         if (e.getAction() == MotionEvent.ACTION_DOWN) {
             MainGame.get().popScene();
             titleBgm.stop();
-            openingBgm.start();
             game.push(new MainScene());
         }
         return super.onTouchEvent(e);
