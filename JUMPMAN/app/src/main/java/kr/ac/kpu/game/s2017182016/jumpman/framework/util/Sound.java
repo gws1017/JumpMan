@@ -14,7 +14,8 @@ public class Sound {
     private static final String TAG = Sound.class.getSimpleName();
     private static SoundPool soundPool;
     private static final int[] SOUND_IDS = {
-            R.raw.king_bump,R.raw.king_jump,R.raw.king_land
+            R.raw.king_bump,R.raw.king_jump,R.raw.king_land,
+            R.raw.menu_intro
     };
     private static HashMap<Integer, Integer> soundIdMap = new HashMap<>();
 
@@ -42,6 +43,12 @@ public class Sound {
         Log.d(TAG, "play: " + resId);
         int soundId = soundIdMap.get(resId);
         int streamId = soundPool.play(soundId, 1f, 1f, 1, 0, 1f);
+        return streamId;
+    }
+    public static int play(int resId,float vol,int loop) {
+        int soundId = soundIdMap.get(resId);
+        float volume = vol /100.f;
+        int streamId = soundPool.play(soundId, volume, volume, 1, loop, 1f);
         return streamId;
     }
 }

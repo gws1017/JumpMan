@@ -5,6 +5,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import android.os.Bundle;
 
 import kr.ac.kpu.game.s2017182016.jumpman.R;
+import kr.ac.kpu.game.s2017182016.jumpman.framework.util.Sound;
 import kr.ac.kpu.game.s2017182016.jumpman.game.scenes.main.MainGame;
 
 public class MainActivity extends AppCompatActivity {
