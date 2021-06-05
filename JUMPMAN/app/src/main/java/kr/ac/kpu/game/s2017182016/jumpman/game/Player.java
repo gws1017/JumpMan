@@ -152,6 +152,7 @@ public class Player implements GameObject, BoxCollidable {
                 
                 Sound.play(R.raw.king_bump);
                 directionX *= -1;
+                setState(State.falling);
                 if(state == State.jump){
                 velocityY = -JUMPPOWERY* this.prevchargetime/2;
                 dy = (float) (velocityY * game.frameTime);
@@ -188,6 +189,13 @@ public class Player implements GameObject, BoxCollidable {
                     Sound.play(R.raw.king_land);
 
                 }
+            }
+            float c = CollisionDetectY(collisionRect);
+            if(c != -100){
+                this.y  = c + playerWidth;
+                if(dy < 0) dy *= -1;
+                if(velocityY< 0) velocityY *= -1;
+
             }
             this.y = y +  dy;
 
@@ -302,6 +310,22 @@ public class Player implements GameObject, BoxCollidable {
 
 
 
+    private float CollisionDetectY(RectF rect) {
+        MainGame game = (MainGame) MainGame.get();
+        ArrayList<GameObject> platforms = MainScene.scene.objectsAt(MainScene.Layer.platform);
+        float top = GameView.view.getHeight();
+        for (GameObject obj : platforms) {
+            Platform platform = (Platform) obj;
+            RectF rect2 = platform.getBoundingRect();
+
+
+
+            if(rect.left >rect2.left&& rect.right < rect2.right)
+                if(rect.top < rect2.bottom && rect.top > rect2.top)
+                    return rect2.bottom;
+        }
+        return -100;
+    }
 
 
     @Override
