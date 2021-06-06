@@ -4,7 +4,10 @@ import android.graphics.Canvas;
 
 import java.util.ArrayList;
 
+import kr.ac.kpu.game.s2017182016.jumpman.R;
+import kr.ac.kpu.game.s2017182016.jumpman.framework.bitmap.IndexedAnimationGameBitmap;
 import kr.ac.kpu.game.s2017182016.jumpman.framework.iface.GameObject;
+import kr.ac.kpu.game.s2017182016.jumpman.framework.object.ImageObject;
 import kr.ac.kpu.game.s2017182016.jumpman.framework.view.GameView;
 import kr.ac.kpu.game.s2017182016.jumpman.game.scenes.main.MainGame;
 import kr.ac.kpu.game.s2017182016.jumpman.game.scenes.main.MainScene;
@@ -80,21 +83,33 @@ public class StageMap implements GameObject {
                 createObject(224,71,33,16);
                 createObject(160,56,33,16);
                 createObject(40,88,33,16);
-                createObject(152,0,176,15);
+//                createObject(152,0,176,15);
                 break;
             case 5:
                 createObject(0,0,7,370);
                 createObject(472,0,10,370);
-                createObject(327,152,176,33);
+                createObject(152,327,176,33);
                 createObject(127,241,50,15);
-                createObject(8,184,48,16);
+                createObject(0,184,56,16);
                 createObject(56,73,40,15);
-                createObject(80,88,16,40);
-                createObject(96,112,97,16);
-                createObject(135,16,57,40);
+                createObject(80,73,16,55);
+                createObject(80,112,112,16);
+                createObject(135,0,57,56);
+                createObject(0,0,190,16);
                 createObject(289,80,191,175);
-                createObject(289,0,40,24);
+                createObject(289,0,50,24);
                 createObject(329,0,95,40);
+                break;
+            case 6:
+                // 252 : 360 = ? : vh
+                MainScene scene = MainScene.scene;
+                createObject(0,0,7,370);
+                createObject(0,327,424,100);
+                createObject(0,342,424,18);
+                createObject(472,0,10,370);
+
+                scene.forestBgm.stop();
+                scene.endBgm.start();
                 break;
         }
 

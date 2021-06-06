@@ -43,7 +43,6 @@ public class Player implements GameObject, BoxCollidable {
     private int chargetime = 0;
     private int prevchargetime = 0;
     private int isInverse = 1;
-    private int temp = 0;
     private float ground_y;
     private float ground_y2;
     private int[] ANIM_INDICES_IDLE = {0};
@@ -54,6 +53,8 @@ public class Player implements GameObject, BoxCollidable {
     private int[] ANIM_INDICES_INV_READY = {103};
     private int[] ANIM_INDICES_Jump = {101};
     private int[] ANIM_INDICES_INV_Jump = {102};
+    private int[] ANIM_INDICES_Falling = {102};
+    private int[] ANIM_INDICES_INV_Falling = {101};
     private Rect COL_BOX_OFFSETS_IDLE = new Rect(-15, -15, 15, 15);
     private Rect collisionOffsetRect = COL_BOX_OFFSETS_IDLE;
     private float playerWidth = 35;
@@ -61,6 +62,7 @@ public class Player implements GameObject, BoxCollidable {
     private RectF collisionRect = new RectF();
     private int directionX = 1;
     private int directionY = 1;
+    private boolean collisionHandle = false;
 
 
     private enum State {
@@ -85,7 +87,7 @@ public class Player implements GameObject, BoxCollidable {
                     indices = ANIM_INDICES_Jump;
                     break;
                 case falling:
-                    indices = ANIM_INDICES_Jump;
+                    indices = ANIM_INDICES_Falling;
                     break;
             }
             bitmap.setIndices(indices);
@@ -104,7 +106,7 @@ public class Player implements GameObject, BoxCollidable {
                     indices = ANIM_INDICES_INV_Jump;
                     break;
                 case falling:
-                    indices = ANIM_INDICES_INV_Jump;
+                    indices = ANIM_INDICES_INV_Falling;
                     break;
             }
             bitmap2.setIndices(indices);
@@ -135,7 +137,9 @@ public class Player implements GameObject, BoxCollidable {
     public void update() {
         MainGame game = MainGame.get();
         MainScene scene =MainScene.scene;
+
         float foot = y + collisionOffsetRect.bottom * GameView.MULTIPLIER;
+
         if (state == State.ready) {
             chargetime += 60*game.frameTime*GameView.view.getHeight()/1003;
             if (chargetime > MAX_JUMPPOWER) {
@@ -146,37 +150,34 @@ public class Player implements GameObject, BoxCollidable {
             float dy = (float) (velocityY * game.frameTime);
             float platformTop = findNearestPlatformTop();
             float dx = directionX*this.x;
-
             getBoundingRect(collisionRect);
+
             if(CollisionDetect(collisionRect)) {
-                
                 Sound.play(R.raw.king_bump);
                 directionX *= -1;
                 setState(State.falling);
+                Log.d(TAG,"dx " + jumpX+" directionX " + directionX +" state "+state);
+
                 if(state == State.jump){
                 velocityY = -JUMPPOWERY* this.prevchargetime/2;
                 dy = (float) (velocityY * game.frameTime);
                 this.prevchargetime = 0;
                 }
-                Log.d(TAG,"dx " + jumpX*game.frameTime+" directionX " + directionX +" state "+state);
+
             }
 
             if (isInverse == 1) {
                 if (jumpX < 0) jumpX *= -1;
                 dx = (float) (jumpX * game.frameTime);
-            if (state == State.falling) dx = (float) (jumpX * game.frameTime /2);
+            if (state == State.falling) dx = (float) (jumpX * game.frameTime /1.5);
             } else if (isInverse == -1) {
                 if (jumpX > 0) jumpX *= -1;
                 dx = (float) (jumpX * game.frameTime);
-            if (state == State.falling) dx = (float) (jumpX * game.frameTime /2);
+            if (state == State.falling) dx = (float) (jumpX * game.frameTime /1.5);
             }
 
 
-
-
-//            velocityX += GRAVITY*game.frameTime;
-
-            if(state == State.falling) jumpX -= jumpX/50;
+//            if(state == State.falling) jumpX -= jumpX/100;
             this.x = x + directionX * dx;
 
             if (this.x - playerWidth < 8*GameView.view.getWidth()/480) this.x = 8*GameView.view.getWidth()/480 + playerWidth;
@@ -184,6 +185,7 @@ public class Player implements GameObject, BoxCollidable {
             if (velocityY >= 0) {
                 if ((int)(foot + dy) >= (int)platformTop ) {
                     dy = platformTop - foot;
+
                     setState(State.idle);
                     directionX = 1;
                     Sound.play(R.raw.king_land);
@@ -192,6 +194,8 @@ public class Player implements GameObject, BoxCollidable {
             }
             float c = CollisionDetectY(collisionRect);
             if(c != -100){
+                Sound.play(R.raw.king_bump);
+
                 this.y  = c + playerWidth;
                 if(dy < 0) dy *= -1;
                 if(velocityY< 0) velocityY *= -1;
@@ -203,7 +207,6 @@ public class Player implements GameObject, BoxCollidable {
 
         } else if (state == State.idle || state == State.move) {
             directionX = 1;
-            directionY = 1;
             px = x;
             velocityX = joystick.getActuatorX() * MAX_SPEED * game.frameTime;
             x += velocityX;
@@ -214,37 +217,40 @@ public class Player implements GameObject, BoxCollidable {
 
 
         //맵이동
-        if (y < 0) {
+        if(mg.num<6){
+            if (y < 0) {
 
-            if (!mg.isLast()) {
-                y = GameView.view.getHeight()-100;
-                bg.nextimg();
-                mg.nextimg();
-                fg.nextimg();
-                ArrayList<GameObject> platforms = MainScene.scene.objectsAt(MainScene.Layer.platform);
-                for (GameObject obj : platforms) {
-                    Platform platform = (Platform) obj;
-                    MainScene.scene.remove(platform);
+                if (!mg.isLast()) {
+                    y = GameView.view.getHeight()-100;
+                    bg.nextimg();
+                    mg.nextimg();
+                    fg.nextimg();
+                    ArrayList<GameObject> platforms = MainScene.scene.objectsAt(MainScene.Layer.platform);
+                    for (GameObject obj : platforms) {
+                        Platform platform = (Platform) obj;
+                        MainScene.scene.remove(platform);
+                    }
+                    scene.add(MainScene.Layer.controller,new StageMap(mg.num));
                 }
-                scene.add(MainScene.Layer.controller,new StageMap(mg.num));
-            }
-        } else if (y >= GameView.view.getHeight()-100) {
-            if (!mg.isFirst()) {
+            } else if (y >= GameView.view.getHeight()-100) {
+                if (!mg.isFirst()) {
 
-                y = 10;
-                bg.previmg();
-                mg.previmg();
-                fg.previmg();
-                setState(State.jump);
-                ArrayList<GameObject> platforms = MainScene.scene.objectsAt(MainScene.Layer.platform);
-                for (GameObject obj : platforms) {
-                    Platform platform = (Platform) obj;
-                    scene.remove(platform);
+                    y = 10;
+                    bg.previmg();
+                    mg.previmg();
+                    fg.previmg();
+                    setState(State.jump);
+                    ArrayList<GameObject> platforms = MainScene.scene.objectsAt(MainScene.Layer.platform);
+                    for (GameObject obj : platforms) {
+                        Platform platform = (Platform) obj;
+                        scene.remove(platform);
+                    }
+                    scene.add(MainScene.Layer.controller,new StageMap(mg.num));
+
                 }
-                scene.add(MainScene.Layer.controller,new StageMap(mg.num));
-
             }
         }
+
 
         //방향전환
         if (this.state != State.jump && this.state != State.ready) {
@@ -262,7 +268,7 @@ public class Player implements GameObject, BoxCollidable {
             if ((int)foot < (int)platformTop) {
                 setState(State.falling);
                 if(state != State.falling)velocityY = 0; //조건문 안걸면 추락하지않음
-                velocityX = 0;
+//                velocityX = 0;
                 //this.y += 0.01;
             }
         }

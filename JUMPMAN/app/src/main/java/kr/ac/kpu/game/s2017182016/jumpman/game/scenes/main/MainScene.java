@@ -25,7 +25,8 @@ public class MainScene extends Scene {
     private Joystick joystick;
     private MediaPlayer openingBgm;
 
-    private MediaPlayer forsetBgm;
+    public MediaPlayer forestBgm;
+    public MediaPlayer endBgm;
     public enum Layer{
         bg,mg,player,fg,platform,controller,LAYER_COUNT
     }
@@ -48,14 +49,14 @@ public class MainScene extends Scene {
         int h = GameView.view.getHeight();
         initLayers(Layer.LAYER_COUNT.ordinal());
         openingBgm = MediaPlayer.create(GameView.view.getContext(),R.raw.opening_theme);
-        forsetBgm = MediaPlayer.create(GameView.view.getContext(),R.raw.nb_troll_forest);
-
+        forestBgm = MediaPlayer.create(GameView.view.getContext(),R.raw.nb_troll_forest);
+        endBgm = MediaPlayer.create(GameView.view.getContext(),R.raw.opening_theme); //엔딩송으로 변경
         openingBgm.start();
         openingBgm.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
             @Override
             public void onCompletion(MediaPlayer mp) {
-                forsetBgm.setLooping(true);
-                forsetBgm.start();
+                forestBgm.setLooping(true);
+                forestBgm.start();
             }
         });
 
@@ -70,6 +71,7 @@ public class MainScene extends Scene {
         add(Layer.bg,bg);
         mg = new Midground(R.mipmap.mg1);
         add(Layer.mg,mg);
+
         fg = new Foreground(R.mipmap.fg1);
         add(Layer.fg,fg);
         joystick = new Joystick(cx,cy,outRadius,inRadius);

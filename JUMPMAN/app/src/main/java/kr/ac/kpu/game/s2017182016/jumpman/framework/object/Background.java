@@ -27,6 +27,7 @@ public class Background implements GameObject {
             R.mipmap.bg4,
             R.mipmap.bg5,
             R.mipmap.bg6,
+            R.mipmap.transparent,
     };
 
 

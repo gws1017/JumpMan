@@ -28,6 +28,7 @@ public class Foreground implements GameObject {
             R.mipmap.fg4,
             R.mipmap.fg5,
             R.mipmap.fg6,
+            R.mipmap.transparent,
     };
 
     public Rect srcRect = new Rect();

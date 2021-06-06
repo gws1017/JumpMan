@@ -28,6 +28,7 @@ public class Midground implements GameObject {
             R.mipmap.mg4,
             R.mipmap.mg5,
             R.mipmap.mg6,
+            R.mipmap.mg7,
     };
 
 
