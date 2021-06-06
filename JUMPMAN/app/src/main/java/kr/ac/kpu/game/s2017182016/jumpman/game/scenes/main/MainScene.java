@@ -50,7 +50,7 @@ public class MainScene extends Scene {
         initLayers(Layer.LAYER_COUNT.ordinal());
         openingBgm = MediaPlayer.create(GameView.view.getContext(),R.raw.opening_theme);
         forestBgm = MediaPlayer.create(GameView.view.getContext(),R.raw.nb_troll_forest);
-        endBgm = MediaPlayer.create(GameView.view.getContext(),R.raw.opening_theme); //엔딩송으로 변경
+        endBgm = MediaPlayer.create(GameView.view.getContext(),R.raw.ending3);
         openingBgm.start();
         openingBgm.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
             @Override
@@ -78,7 +78,7 @@ public class MainScene extends Scene {
         add(Layer.controller,joystick);
         add(Layer.controller,new StageMap(mg.num));
 
-        player = new Player(w/2,h-(50)*h/360,joystick);
+        player = new Player(w/2,h-(80)*h/360,joystick);
         add(Layer.player,player);
 
     }
