@@ -52,8 +52,8 @@ public class StageMap implements GameObject {
                 createObject(207,304,50,15);
                 createObject(320,304,58,17);
                 createObject(424,255,58,15);
-                createObject(190,222,98,15);
-                createObject(288,207,49,20);
+                createObject(190,222,108,10);
+                createObject(288,207,49,25);
                 createObject(158,118,60,50);
                 createObject(8,96,58,17);
                 createObject(135,0,73,17);
@@ -83,7 +83,7 @@ public class StageMap implements GameObject {
                 createObject(224,71,33,16);
                 createObject(160,56,33,16);
                 createObject(40,88,33,16);
-//                createObject(152,0,176,15);
+                createObject(152,0,176,15);
                 break;
             case 5:
                 createObject(0,0,7,370);
