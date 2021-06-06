@@ -183,7 +183,7 @@ public class Player implements GameObject, BoxCollidable {
             if (this.x - playerWidth < 8*GameView.view.getWidth()/480) this.x = 8*GameView.view.getWidth()/480 + playerWidth;
             else if (this.x + playerWidth > 472*GameView.view.getWidth()/480) this.x = 472*GameView.view.getWidth()/480 - playerWidth;
             if (velocityY >= 0) {
-                if ((int)(foot + dy) >= (int)platformTop ) {
+                if ((int)(foot + dy) >= (int)platformTop-3 ) {
                     dy = platformTop - foot;
 
                     setState(State.idle);
@@ -197,7 +197,7 @@ public class Player implements GameObject, BoxCollidable {
                 Sound.play(R.raw.king_bump);
 
                 this.y  = c + playerWidth;
-                if(dy < 0) dy *= -1;
+//                if(dy < 0) dy *= -1;
                 if(velocityY< 0) velocityY *= -1;
 
             }
@@ -308,7 +308,8 @@ public class Player implements GameObject, BoxCollidable {
                 RectF rect2 = platform.getBoundingRect();
                 if (rect.right < rect2.left || rect.left > rect2.right) continue;
                 if (rect.top < rect2.top || rect.bottom > rect2.bottom) continue;
-               
+//                if (rect.bottom <= rect2.top || rect.top >= rect2.bottom) continue;
+
                 return true;
         }
         return false;
@@ -375,6 +376,7 @@ public class Player implements GameObject, BoxCollidable {
             setState(State.jump);
             velocityY = -JUMPPOWERY *this.chargetime;
             jumpX = -JUMPPOWERX *this.chargetime;
+            if(MAX_JUMPPOWER*0.6 > chargetime) jumpX *= 1.8;
         }
         else{
            //Log.d(TAG,"Not in a state that can't jump " + state);
