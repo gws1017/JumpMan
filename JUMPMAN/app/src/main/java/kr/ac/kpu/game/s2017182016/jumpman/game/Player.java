@@ -40,8 +40,8 @@ public class Player implements GameObject, BoxCollidable {
     private double velocityX;
     private double jumpX;
     private double velocityY;
-    private int chargetime = 0;
-    private int prevchargetime = 0;
+    private float chargetime = 0;
+    private float prevchargetime = 0;
     private int isInverse = 1;
     private float ground_y;
     private float ground_y2;
