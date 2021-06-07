@@ -183,7 +183,7 @@ public class Player implements GameObject, BoxCollidable {
             if (this.x - playerWidth < 8*GameView.view.getWidth()/480) this.x = 8*GameView.view.getWidth()/480 + playerWidth;
             else if (this.x + playerWidth > 472*GameView.view.getWidth()/480) this.x = 472*GameView.view.getWidth()/480 - playerWidth;
             if (velocityY >= 0) {
-                if ((int)(foot + dy) >= (int)platformTop-3 ) {
+                if ((int)(foot + dy) >= (int)platformTop ) {
                     dy = platformTop - foot;
 
                     setState(State.idle);
@@ -266,6 +266,7 @@ public class Player implements GameObject, BoxCollidable {
             float platformTop = findNearestPlatformTop();
 
             if ((int)foot < (int)platformTop) {
+                this.x = x + isInverse*5;
                 setState(State.falling);
                 if(state != State.falling)velocityY = 0; //조건문 안걸면 추락하지않음
 //                velocityX = 0;
@@ -296,7 +297,7 @@ public class Player implements GameObject, BoxCollidable {
 
         }
 
-        return top;
+        return top-3;
     }
 
     boolean CollisionDetect(RectF rect) {
@@ -307,8 +308,8 @@ public class Player implements GameObject, BoxCollidable {
                 Platform platform = (Platform) obj;
                 RectF rect2 = platform.getBoundingRect();
                 if (rect.right < rect2.left || rect.left > rect2.right) continue;
-                if (rect.top < rect2.top || rect.bottom > rect2.bottom) continue;
-//                if (rect.bottom <= rect2.top || rect.top >= rect2.bottom) continue;
+//                if (rect.top < rect2.top || rect.bottom > rect2.bottom) continue;
+                if (rect.bottom <= rect2.top || rect.top >= rect2.bottom) continue;
 
                 return true;
         }
