@@ -221,7 +221,7 @@ public class Player implements GameObject, BoxCollidable {
             if (y < 0) {
 
                 if (!mg.isLast()) {
-                    y = GameView.view.getHeight()-100;
+                    y = GameView.view.getHeight()-30*GameView.view.getHeight()/360;// 30 : 360 = ? : vh
                     bg.nextimg();
                     mg.nextimg();
                     fg.nextimg();
@@ -232,7 +232,7 @@ public class Player implements GameObject, BoxCollidable {
                     }
                     scene.add(MainScene.Layer.controller,new StageMap(mg.num));
                 }
-            } else if (y >= GameView.view.getHeight()-100) {
+            } else if (y >= GameView.view.getHeight()-30*GameView.view.getHeight()/360) {
                 if (!mg.isFirst()) {
 
                     y = 10;
