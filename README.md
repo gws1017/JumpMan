@@ -74,16 +74,9 @@
 
 ![image](https://user-images.githubusercontent.com/70964651/120975288-01986900-c7ac-11eb-8b14-032152cd86e5.png)
 
-
-​    
-
-
-
-
-
 6. 사용한 기술
    
-1. 조이스틱
+   1. 조이스틱
    2. 레이어 배경
    3. 충돌 체크
    
