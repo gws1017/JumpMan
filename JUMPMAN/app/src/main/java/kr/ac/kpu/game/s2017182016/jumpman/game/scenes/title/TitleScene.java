@@ -61,10 +61,17 @@ public class TitleScene extends Scene {
     public boolean onTouchEvent(MotionEvent e) {
         MainGame game = MainGame.get();
         if (e.getAction() == MotionEvent.ACTION_DOWN) {
-            MainGame.get().popScene();
             titleBgm.stop();
             startBgm.start();
-            game.push(new MainScene());
+            startBgm.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+                @Override
+                public void onCompletion(MediaPlayer mp) {
+                    MainGame game = MainGame.get();
+                    game.popScene();
+                    game.push(new MainScene());
+
+                }
+            });
         }
         return super.onTouchEvent(e);
     }
