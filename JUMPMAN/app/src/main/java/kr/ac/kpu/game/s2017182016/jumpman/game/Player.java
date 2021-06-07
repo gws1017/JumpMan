@@ -266,7 +266,7 @@ public class Player implements GameObject, BoxCollidable {
             float platformTop = findNearestPlatformTop();
 
             if ((int)foot < (int)platformTop) {
-                this.x = x + isInverse*5;
+//                if(state == State.idle || state == State.move) this.x = x + isInverse*5;
                 setState(State.falling);
                 if(state != State.falling)velocityY = 0; //조건문 안걸면 추락하지않음
 //                velocityX = 0;
