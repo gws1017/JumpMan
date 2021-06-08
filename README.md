@@ -99,7 +99,7 @@
     ![image](https://user-images.githubusercontent.com/70964651/120980755-e3ce0280-c7b1-11eb-8fae-c8608c9c2b09.png)
 
     2. 판매를 한다면 원작 전체 맵을 모두 구현
-       3. 가끔 충돌버그로 벽이나 플랫폼에 낀다.
+    3. 가끔 충돌버그로 벽이나 플랫폼에 낀다.
 
     -----
 
