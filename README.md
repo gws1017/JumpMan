@@ -94,13 +94,16 @@
 
 10. 아쉬운점
 
-   1. 플랫폼을 배경 이미지를 보고 좌표로 직접 일일이 찍었던것
+       1. 플랫폼을 배경 이미지를 보고 좌표로 직접 일일이 찍었던것
 
-      ![image](https://user-images.githubusercontent.com/70964651/120980755-e3ce0280-c7b1-11eb-8fae-c8608c9c2b09.png)
+    ![image](https://user-images.githubusercontent.com/70964651/120980755-e3ce0280-c7b1-11eb-8fae-c8608c9c2b09.png)
 
-   2. 판매를 한다면 원작 전체 맵을 모두 구현
+    2. 판매를 한다면 원작 전체 맵을 모두 구현
+       3. 가끔 충돌버그로 벽이나 플랫폼에 낀다.
 
-   3. 가끔 충돌버그로 벽이나 플랫폼에 낀다.
+    -----
+
+    
 
 11. MainGame에 등장하는 게임 오브젝트 설명
 
@@ -122,7 +125,7 @@
 
    
 
-   
+  
 
    **BackGround**
 
@@ -169,7 +172,7 @@
 
    2차발표 링크:https://youtu.be/GnancDVb5IA
 
-   
+   3차 발표 링크 :https://youtu.be/qEArvUyXz6E
 
    
 
