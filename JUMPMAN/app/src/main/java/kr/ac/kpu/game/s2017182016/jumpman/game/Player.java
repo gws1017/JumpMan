@@ -146,7 +146,8 @@ public class Player implements GameObject, BoxCollidable {
                 jump();
                 return;
             } else return;
-        } else if (state == State.jump || state == State.falling) {
+        }
+        else if (state == State.jump || state == State.falling) {
             float dy = (float) (velocityY * game.frameTime);
             float platformTop = findNearestPlatformTop();
             float dx = directionX*this.x;
@@ -156,7 +157,7 @@ public class Player implements GameObject, BoxCollidable {
                 Sound.play(R.raw.king_bump);
                 directionX *= -1;
                 setState(State.falling);
-                Log.d(TAG,"dx " + jumpX+" directionX " + directionX +" state "+state);
+                //Log.d(TAG,"dx " + jumpX+" directionX " + directionX +" state "+state);
 
                 if(state == State.jump){
                 velocityY = -JUMPPOWERY* this.prevchargetime/2;
@@ -177,7 +178,6 @@ public class Player implements GameObject, BoxCollidable {
             }
 
 
-//            if(state == State.falling) jumpX -= jumpX/100;
             this.x = x + directionX * dx;
 
             if (this.x - playerWidth < 8*GameView.view.getWidth()/480) this.x = 8*GameView.view.getWidth()/480 + playerWidth;
@@ -205,7 +205,8 @@ public class Player implements GameObject, BoxCollidable {
 
             velocityY +=  GRAVITY * game.frameTime;
 
-        } else if (state == State.idle || state == State.move) {
+        }
+        else if (state == State.idle || state == State.move) {
             directionX = 1;
             px = x;
             velocityX = joystick.getActuatorX() * MAX_SPEED * game.frameTime;
@@ -213,27 +214,53 @@ public class Player implements GameObject, BoxCollidable {
             getBoundingRect(collisionRect);
             if(CollisionDetect(collisionRect)) x = px;
 
+            if (velocityX > 0)
+            {
+                isInverse = 1;
+                setState(State.move);
+            }
+            else if (velocityX < 0)
+            {
+                isInverse = -1;
+                setState(State.move);
+            }
+            else
+            {
+                setState(State.idle);
+            }
+            float platformTop = findNearestPlatformTop();
+            if ((int)foot < (int)platformTop)
+            {
+                setState(State.falling);
+                if(state != State.falling)velocityY = 0; //조건문 안걸면 추락하지않음
+            }
         }
 
 
         //맵이동
-        if(mg.num<6){
-            if (y < 0) {
-
-                if (!mg.isLast()) {
+        if(mg.num<6)
+        {
+            if (y < 0)
+            {
+                if (!mg.isLast())
+                {
                     y = GameView.view.getHeight()-30*GameView.view.getHeight()/360;// 30 : 360 = ? : vh
                     bg.nextimg();
                     mg.nextimg();
                     fg.nextimg();
                     ArrayList<GameObject> platforms = MainScene.scene.objectsAt(MainScene.Layer.platform);
-                    for (GameObject obj : platforms) {
+                    for (GameObject obj : platforms)
+                    {
                         Platform platform = (Platform) obj;
                         MainScene.scene.remove(platform);
                     }
                     scene.add(MainScene.Layer.controller,new StageMap(mg.num));
                 }
-            } else if (y >= GameView.view.getHeight()-30*GameView.view.getHeight()/360) {
-                if (!mg.isFirst()) {
+            }
+            else if (y >= GameView.view.getHeight()-30*GameView.view.getHeight()/360)
+            {
+                if (!mg.isFirst())
+                {
 
                     y = 10;
                     bg.previmg();
@@ -253,25 +280,8 @@ public class Player implements GameObject, BoxCollidable {
 
 
         //방향전환
-        if (this.state != State.jump && this.state != State.ready) {
-            if (velocityX > 0) {
-                isInverse = 1;
-                setState(State.move);
-            } else if (velocityX < 0) {
-                isInverse = -1;
-                setState(State.move);
-            } else {
-                setState(State.idle);
-            }
-            float platformTop = findNearestPlatformTop();
+        if (this.state != State.jump && this.state != State.ready && this.state != State.falling) {
 
-            if ((int)foot < (int)platformTop) {
-//                if(state == State.idle || state == State.move) this.x = x + isInverse*5;
-                setState(State.falling);
-                if(state != State.falling)velocityY = 0; //조건문 안걸면 추락하지않음
-//                velocityX = 0;
-                //this.y += 0.01;
-            }
         }
 
 
@@ -281,11 +291,14 @@ public class Player implements GameObject, BoxCollidable {
         MainGame game = (MainGame) MainGame.get();
         ArrayList<GameObject> platforms = MainScene.scene.objectsAt(MainScene.Layer.platform);
         float top = GameView.view.getHeight();
+        float offset = 5;
         for (GameObject obj : platforms) {
             Platform platform = (Platform) obj;
             RectF rect = platform.getBoundingRect();
-
-            if (rect.left > x || x > rect.right) {
+            if (x + collisionOffsetRect.right * GameView.MULTIPLIER  - offset < rect.left ) {
+                continue;
+            }
+            if (x + collisionOffsetRect.left * GameView.MULTIPLIER + offset > rect.right ) {
                 continue;
             }
             if (rect.top < y) {
@@ -308,7 +321,6 @@ public class Player implements GameObject, BoxCollidable {
                 Platform platform = (Platform) obj;
                 RectF rect2 = platform.getBoundingRect();
                 if (rect.right < rect2.left || rect.left > rect2.right) continue;
-//                if (rect.top < rect2.top || rect.bottom > rect2.bottom) continue;
                 if (rect.bottom <= rect2.top || rect.top >= rect2.bottom) continue;
 
                 return true;

@@ -99,12 +99,11 @@
     ![image](https://user-images.githubusercontent.com/70964651/120980755-e3ce0280-c7b1-11eb-8fae-c8608c9c2b09.png)
 
     2. 판매를 한다면 원작 전체 맵을 모두 구현
-    3. 가끔 충돌버그로 벽이나 플랫폼에 낀다.
-
-    -----
-
     
-
+    -----
+    
+    
+    
 11. MainGame에 등장하는 게임 오브젝트 설명
 
    게임 오브젝트는 Player, Background, Joystick 3개의 클래스가 핵심이라고 할 수 있다.
@@ -166,13 +165,9 @@
 
    
 
-16. 유튜브 발표 링크
+16. 유튜브 링크(시연 영상)
 
-   1차발표 링크:https://youtu.be/3bFYYWWzNd4
-
-   2차발표 링크:https://youtu.be/GnancDVb5IA
-
-   3차 발표 링크 :https://youtu.be/qEArvUyXz6E
+https://youtu.be/zmU5_k2yS-k
 
    
 
