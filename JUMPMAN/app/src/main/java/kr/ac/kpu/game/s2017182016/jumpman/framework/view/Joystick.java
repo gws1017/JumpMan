@@ -74,6 +74,27 @@ public class Joystick implements GameObject {
         return joystickCircle2TouchDistance < outCR;
     }
 
+    /** Joystick 주변(반지름의 약 2.8배)에서는 점프 입력을 막는다. */
+    public boolean blocksJump(double touchX, double touchY) {
+        double distance = Math.sqrt(
+                Math.pow(outCCX - touchX, 2) +
+                Math.pow(outCCY - touchY, 2)
+        );
+        return distance < outCR * 2.8f;
+    }
+
+    public int getOutCCX() {
+        return outCCX;
+    }
+
+    public int getOutCCY() {
+        return outCCY;
+    }
+
+    public int getOutCR() {
+        return outCR;
+    }
+
     public void setIsPressed(boolean isPressed) {
         this.isPressed = isPressed;
     }

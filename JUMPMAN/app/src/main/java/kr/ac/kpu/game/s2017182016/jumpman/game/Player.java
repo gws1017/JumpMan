@@ -24,6 +24,7 @@ import kr.ac.kpu.game.s2017182016.jumpman.game.scenes.main.MainScene;
 public class Player implements GameObject, BoxCollidable {
 
     private static final float MAX_SPEED = 300.0f*GameView.view.getWidth()/2200;
+    private static final float SLOPE_SLIDE_SPEED = 220.0f * GameView.view.getWidth() / 2200;
     private static final String TAG = Player.class.getSimpleName();
     private static final float JUMPPOWERY = 30;
     private static final float JUMPPOWERX = 18;
@@ -63,6 +64,7 @@ public class Player implements GameObject, BoxCollidable {
     private int directionX = 1;
     private int directionY = 1;
     private boolean collisionHandle = false;
+    private float bumpSoundCooldown = 0f;
 
 
     private enum State {
@@ -148,133 +150,143 @@ public class Player implements GameObject, BoxCollidable {
             } else return;
         }
         else if (state == State.jump || state == State.falling) {
-            float dy = (float) (velocityY * game.frameTime);
-            float platformTop = findNearestPlatformTop();
-            float dx = directionX*this.x;
-            getBoundingRect(collisionRect);
-
-            if(CollisionDetect(collisionRect)) {
-                Sound.play(R.raw.king_bump);
-                directionX *= -1;
-                setState(State.falling);
-                //Log.d(TAG,"dx " + jumpX+" directionX " + directionX +" state "+state);
-
-                if(state == State.jump){
-                velocityY = -JUMPPOWERY* this.prevchargetime/2;
-                dy = (float) (velocityY * game.frameTime);
-                this.prevchargetime = 0;
-                }
-
+            if (bumpSoundCooldown > 0) {
+                bumpSoundCooldown -= game.frameTime;
             }
 
+            // Horizontal speed from charge; facing is directionX / isInverse
+            float dx;
             if (isInverse == 1) {
-                if (jumpX < 0) jumpX *= -1;
-                dx = (float) (jumpX * game.frameTime);
-            if (state == State.falling) dx = (float) (jumpX * game.frameTime /1.5);
-            } else if (isInverse == -1) {
-                if (jumpX > 0) jumpX *= -1;
-                dx = (float) (jumpX * game.frameTime);
-            if (state == State.falling) dx = (float) (jumpX * game.frameTime /1.5);
+                dx = (float) (Math.abs(jumpX) * game.frameTime);
+            } else {
+                dx = (float) (Math.abs(jumpX) * game.frameTime);
+            }
+            if (state == State.falling) {
+                dx /= 1.5f;
             }
 
+            float dy = (float) (velocityY * game.frameTime);
 
-            this.x = x + directionX * dx;
+            // --- X axis: move, then resolve. Bounce only when we hit while moving into a wall. ---
+            float prevX = x;
+            x += directionX * dx;
+            float leftBound = 8f * GameView.view.getWidth() / 480f + playerWidth;
+            float rightBound = 472f * GameView.view.getWidth() / 480f - playerWidth;
+            if (x < leftBound) x = leftBound;
+            if (x > rightBound) x = rightBound;
 
-            if (this.x - playerWidth < 8*GameView.view.getWidth()/480) this.x = 8*GameView.view.getWidth()/480 + playerWidth;
-            else if (this.x + playerWidth > 472*GameView.view.getWidth()/480) this.x = 472*GameView.view.getWidth()/480 - playerWidth;
-            if (velocityY >= 0) {
-                if ((int)(foot + dy) >= (int)platformTop ) {
-                    dy = platformTop - foot;
-
-                    setState(State.idle);
-                    directionX = 1;
-                    Sound.play(R.raw.king_land);
-
+            getBoundingRect(collisionRect);
+            if (CollisionDetect(collisionRect)) {
+                x = prevX;
+                getBoundingRect(collisionRect);
+                // Still inside (spawned/embedded): nudge out instead of flipping every frame
+                if (CollisionDetect(collisionRect)) {
+                    separateFromWalls();
+                } else {
+                    // Clean side hit → bounce once
+                    directionX *= -1;
+                    isInverse *= -1;
+                    setState(State.falling);
+                    playBumpSound();
                 }
             }
-            float c = CollisionDetectY(collisionRect);
-            if(c != -100){
-                Sound.play(R.raw.king_bump);
 
-                this.y  = c + playerWidth;
-//                if(dy < 0) dy *= -1;
-                if(velocityY< 0) velocityY *= -1;
+            // --- Y axis ---
+            float prevY = y;
+            foot = y + collisionOffsetRect.bottom * GameView.MULTIPLIER;
+            float platformTop = findNearestPlatformTop();
 
+            if (velocityY >= 0 && (foot + dy) >= platformTop) {
+                dy = platformTop - foot;
+                y += dy;
+                velocityY = 0;
+                Sound.play(R.raw.king_land);
+                if (!tryStartSlopeSlide(game.frameTime)) {
+                    setState(State.idle);
+                }
+            } else {
+                y += dy;
+                getBoundingRect(collisionRect);
+                if (CollisionDetect(collisionRect)) {
+                    // Ceiling or embedded vertically
+                    if (velocityY < 0) {
+                        // Hit underside → bounce down a bit
+                        y = prevY;
+                        velocityY = Math.abs(velocityY) * 0.35f;
+                        setState(State.falling);
+                        playBumpSound();
+                    } else {
+                        // Falling into geometry: snap onto nearest top if possible
+                        y = prevY;
+                        foot = y + collisionOffsetRect.bottom * GameView.MULTIPLIER;
+                        platformTop = findNearestPlatformTop();
+                        if (foot + 4 >= platformTop) {
+                            y = platformTop - collisionOffsetRect.bottom * GameView.MULTIPLIER;
+                            velocityY = 0;
+                            Sound.play(R.raw.king_land);
+                            if (!tryStartSlopeSlide(game.frameTime)) {
+                                setState(State.idle);
+                            }
+                        } else {
+                            separateFromWalls();
+                        }
+                    }
+                }
             }
-            this.y = y +  dy;
 
-            velocityY +=  GRAVITY * game.frameTime;
-
+            if (state == State.jump || state == State.falling) {
+                velocityY += GRAVITY * game.frameTime;
+            }
         }
         else if (state == State.idle || state == State.move) {
-            directionX = 1;
-            px = x;
-            velocityX = joystick.getActuatorX() * MAX_SPEED * game.frameTime;
-            x += velocityX;
-            getBoundingRect(collisionRect);
-            if(CollisionDetect(collisionRect)) x = px;
+            if (tryStartSlopeSlide(game.frameTime)) {
+                // Red slope: keep sliding, no stand still
+            } else {
+                px = x;
+                velocityX = joystick.getActuatorX() * MAX_SPEED * game.frameTime;
+                x += velocityX;
+                getBoundingRect(collisionRect);
+                if (CollisionDetect(collisionRect)) x = px;
 
-            if (velocityX > 0)
-            {
-                isInverse = 1;
-                setState(State.move);
-            }
-            else if (velocityX < 0)
-            {
-                isInverse = -1;
-                setState(State.move);
-            }
-            else
-            {
-                setState(State.idle);
-            }
-            float platformTop = findNearestPlatformTop();
-            if ((int)foot < (int)platformTop)
-            {
-                setState(State.falling);
-                if(state != State.falling)velocityY = 0; //조건문 안걸면 추락하지않음
+                if (velocityX > 0) {
+                    isInverse = 1;
+                    directionX = 1;
+                    setState(State.move);
+                } else if (velocityX < 0) {
+                    isInverse = -1;
+                    directionX = -1;
+                    setState(State.move);
+                } else {
+                    setState(State.idle);
+                }
+                float platformTop = findNearestPlatformTop();
+                if ((int) foot < (int) platformTop) {
+                    setState(State.falling);
+                    if (state != State.falling) velocityY = 0;
+                }
             }
         }
 
 
-        //맵이동
-        if(mg.num<6)
-        {
-            if (y < 0)
-            {
-                if (!mg.isLast())
-                {
-                    y = GameView.view.getHeight()-30*GameView.view.getHeight()/360;// 30 : 360 = ? : vh
-                    bg.nextimg();
-                    mg.nextimg();
-                    fg.nextimg();
-                    ArrayList<GameObject> platforms = MainScene.scene.objectsAt(MainScene.Layer.platform);
-                    for (GameObject obj : platforms)
-                    {
-                        Platform platform = (Platform) obj;
-                        MainScene.scene.remove(platform);
-                    }
-                    scene.add(MainScene.Layer.controller,new StageMap(mg.num));
-                }
+        // 맵 이동 (level.png 스크린 단위)
+        if (y < 0) {
+            if (!mg.isLast()) {
+                y = GameView.view.getHeight() - 30 * GameView.view.getHeight() / 360;
+                bg.nextimg();
+                mg.nextimg();
+                fg.nextimg();
+                clearPlatforms(scene);
+                scene.add(MainScene.Layer.controller, new StageMap(mg.num));
             }
-            else if (y >= GameView.view.getHeight()-30*GameView.view.getHeight()/360)
-            {
-                if (!mg.isFirst())
-                {
-
-                    y = 10;
-                    bg.previmg();
-                    mg.previmg();
-                    fg.previmg();
-                    setState(State.jump);
-                    ArrayList<GameObject> platforms = MainScene.scene.objectsAt(MainScene.Layer.platform);
-                    for (GameObject obj : platforms) {
-                        Platform platform = (Platform) obj;
-                        scene.remove(platform);
-                    }
-                    scene.add(MainScene.Layer.controller,new StageMap(mg.num));
-
-                }
+        } else if (y >= GameView.view.getHeight() - 30 * GameView.view.getHeight() / 360) {
+            if (!mg.isFirst()) {
+                y = 10;
+                bg.previmg();
+                mg.previmg();
+                fg.previmg();
+                setState(State.jump);
+                clearPlatforms(scene);
+                scene.add(MainScene.Layer.controller, new StageMap(mg.num));
             }
         }
 
@@ -287,18 +299,33 @@ public class Player implements GameObject, BoxCollidable {
 
     }
 
+    private void clearPlatforms(MainScene scene) {
+        ArrayList<GameObject> platforms = scene.objectsAt(MainScene.Layer.platform);
+        for (GameObject obj : platforms) {
+            scene.remove((Platform) obj);
+        }
+    }
+
     private float findNearestPlatformTop() {
-        MainGame game = (MainGame) MainGame.get();
+        Platform platform = findNearestPlatform();
+        if (platform == null) {
+            return GameView.view.getHeight() - 3;
+        }
+        return platform.getBoundingRect().top - 3;
+    }
+
+    private Platform findNearestPlatform() {
         ArrayList<GameObject> platforms = MainScene.scene.objectsAt(MainScene.Layer.platform);
         float top = GameView.view.getHeight();
         float offset = 5;
+        Platform nearest = null;
         for (GameObject obj : platforms) {
             Platform platform = (Platform) obj;
             RectF rect = platform.getBoundingRect();
-            if (x + collisionOffsetRect.right * GameView.MULTIPLIER  - offset < rect.left ) {
+            if (x + collisionOffsetRect.right * GameView.MULTIPLIER - offset < rect.left) {
                 continue;
             }
-            if (x + collisionOffsetRect.left * GameView.MULTIPLIER + offset > rect.right ) {
+            if (x + collisionOffsetRect.left * GameView.MULTIPLIER + offset > rect.right) {
                 continue;
             }
             if (rect.top < y) {
@@ -306,11 +333,78 @@ public class Player implements GameObject, BoxCollidable {
             }
             if (top > rect.top) {
                 top = rect.top;
+                nearest = platform;
             }
-
         }
+        return nearest;
+    }
 
-        return top-3;
+    /** If standing on a red slope, push along slopeDir and enter falling. */
+    private boolean tryStartSlopeSlide(float frameTime) {
+        Platform platform = findNearestPlatform();
+        if (platform == null || !platform.isSlope()) {
+            return false;
+        }
+        float foot = y + collisionOffsetRect.bottom * GameView.MULTIPLIER;
+        float top = platform.getBoundingRect().top;
+        if (foot > top + 12) {
+            return false;
+        }
+        int dir = platform.slopeDir;
+        directionX = dir;
+        isInverse = dir;
+        // falling uses abs(jumpX)*dt / 1.5 — keep enough speed to actually slide
+        jumpX = SLOPE_SLIDE_SPEED * 1.5;
+        velocityX = SLOPE_SLIDE_SPEED * dir * frameTime;
+        x += velocityX;
+        getBoundingRect(collisionRect);
+        if (CollisionDetect(collisionRect)) {
+            x -= velocityX;
+        }
+        if (velocityY < 40) {
+            velocityY = 80;
+        }
+        setState(State.falling);
+        return true;
+    }
+
+    private void playBumpSound() {
+        if (bumpSoundCooldown <= 0) {
+            Sound.play(R.raw.king_bump);
+            bumpSoundCooldown = 0.12f;
+        }
+    }
+
+    /** Push player out of overlapping platforms horizontally (stops jitter). */
+    private void separateFromWalls() {
+        getBoundingRect(collisionRect);
+        if (!CollisionDetect(collisionRect)) {
+            return;
+        }
+        float step = 2f;
+        for (int i = 0; i < 48; i++) {
+            x -= step;
+            getBoundingRect(collisionRect);
+            if (!CollisionDetect(collisionRect)) {
+                directionX = -1;
+                isInverse = -1;
+                setState(State.falling);
+                playBumpSound();
+                return;
+            }
+            x += step;
+            x += step;
+            getBoundingRect(collisionRect);
+            if (!CollisionDetect(collisionRect)) {
+                directionX = 1;
+                isInverse = 1;
+                setState(State.falling);
+                playBumpSound();
+                return;
+            }
+            x -= step;
+            step += 1f;
+        }
     }
 
     boolean CollisionDetect(RectF rect) {
@@ -380,6 +474,26 @@ public class Player implements GameObject, BoxCollidable {
             return;
         }
     }
+
+    public void cancelReady() {
+        if (state == State.ready) {
+            chargetime = 0;
+            setState(State.idle);
+        }
+    }
+
+    public void resetSpawn() {
+        x = GameView.view.getWidth() / 2f;
+        y = GameView.view.getHeight() - 80f * GameView.view.getHeight() / 360f;
+        velocityX = 0;
+        velocityY = 0;
+        jumpX = 0;
+        chargetime = 0;
+        prevchargetime = 0;
+        directionX = 1;
+        setState(State.idle);
+    }
+
      // 43: 1003 = ? vh2
     public void jump() {
         MainGame game =MainGame.get();
@@ -387,8 +501,10 @@ public class Player implements GameObject, BoxCollidable {
          if(state == State.ready){
              Sound.play(R.raw.king_jump);
             setState(State.jump);
+            // Jump the way the player is facing (isInverse: 1=right, -1=left)
+            directionX = isInverse;
             velocityY = -JUMPPOWERY *this.chargetime;
-            jumpX = -JUMPPOWERX *this.chargetime;
+            jumpX = JUMPPOWERX * this.chargetime;
             if(MAX_JUMPPOWER*0.6 > chargetime) jumpX *= 1.8;
         }
         else{

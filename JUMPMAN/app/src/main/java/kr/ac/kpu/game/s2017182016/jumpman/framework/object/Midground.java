@@ -5,90 +5,103 @@ import android.graphics.Canvas;
 import android.graphics.Rect;
 import android.graphics.RectF;
 
-import kr.ac.kpu.game.s2017182016.jumpman.R;
 import kr.ac.kpu.game.s2017182016.jumpman.framework.bitmap.GameBitmap;
 import kr.ac.kpu.game.s2017182016.jumpman.framework.iface.GameObject;
+import kr.ac.kpu.game.s2017182016.jumpman.framework.util.AssetBitmap;
 import kr.ac.kpu.game.s2017182016.jumpman.framework.view.GameView;
+import kr.ac.kpu.game.s2017182016.jumpman.game.LevelMaskParser;
 
 public class Midground implements GameObject {
-
-    public static final int MAG = 5;
-    //    private static int w;
-//    private static int h;
-//    private static int imageWidth;
-//    private static int imageHeight;
-//    private static int bgLeft;
-//    private static int bgRight;
     public static Bitmap mgbitmap;
-
-    private int[] midmaps = {
-            R.mipmap.mg1,
-            R.mipmap.mg2,
-            R.mipmap.mg3,
-            R.mipmap.mg4,
-            R.mipmap.mg5,
-            R.mipmap.mg6,
-            R.mipmap.mg7,
-    };
-
-
     public Rect srcRect = new Rect();
     public RectF dstRect = new RectF();
-    public int num = 0;
+    /** Jump King screen number (1-based, Hitbox2Screens order). */
+    public int num;
+    private final boolean fromMipmap;
 
-    public Midground(int resId){
+    public Midground(int screenNumber) {
+        this.fromMipmap = false;
+        this.num = screenNumber;
+        loadCurrent();
+    }
 
-        mgbitmap = GameBitmap.load(resId);
-        int w = mgbitmap.getWidth();
-        int h = mgbitmap.getHeight();
-        srcRect.set(0,0,w,h);
-        float l = 0;
-        float t = 0;
-        float b = GameView.view.getHeight();
-        float r = GameView.view.getWidth();
+    /** Fullscreen layer from mipmap (title screen). */
+    public Midground(int resId, boolean fromMipmap) {
+        this.fromMipmap = fromMipmap;
+        this.num = 0;
+        if (fromMipmap) {
+            mgbitmap = GameBitmap.load(resId);
+            srcRect.set(0, 0, mgbitmap.getWidth(), mgbitmap.getHeight());
+            dstRect.set(0, 0, GameView.view.getWidth(), GameView.view.getHeight());
+        } else {
+            this.num = resId;
+            loadCurrent();
+        }
+    }
 
-        dstRect.set(l,t,r,b);
-//        if(bitmap == null)
-//        {
-//            Resources res = GameView.view.getResources();
-//            bitmap = BitmapFactory.decodeResource(res, R.mipmap.bg_1);
-//
-//            w = GameView.view.getWidth();
-//            h = GameView.view.getHeight();
-//
-//            imageWidth = bitmap.getWidth();
-//            imageHeight = bitmap.getHeight();
-//
-//            bgLeft = w/2 - imageWidth*MAG/2;
-//            bgRight = w/2 + imageWidth*MAG/2;
-//            dstRect = new Rect(bgLeft,0,bgRight,h);
-//
-//        }
+    private void loadCurrent() {
+        Bitmap bmp = AssetBitmap.load(GameView.view.getContext(), "midground/" + num + ".png");
+        mgbitmap = bmp;
+        if (bmp == null) {
+            srcRect.set(0, 0, 1, 1);
+        } else {
+            srcRect.set(0, 0, bmp.getWidth(), bmp.getHeight());
+        }
+        dstRect.set(0, 0, GameView.view.getWidth(), GameView.view.getHeight());
     }
 
     @Override
     public void update() {
-
     }
 
     @Override
     public void draw(Canvas canvas) {
-        canvas.drawBitmap(mgbitmap,srcRect,dstRect,null);
+        if (mgbitmap != null) {
+            canvas.drawBitmap(mgbitmap, srcRect, dstRect, null);
+        }
     }
 
     public void nextimg() {
-        this.mgbitmap = GameBitmap.load(midmaps[++num]);
+        if (fromMipmap) {
+            return;
+        }
+        int above = LevelMaskParser.screenAbove(num);
+        if (above < 0) {
+            return;
+        }
+        setScreen(above);
     }
+
     public void previmg() {
-        this.mgbitmap = GameBitmap.load(midmaps[--num]);
+        if (fromMipmap) {
+            return;
+        }
+        int below = LevelMaskParser.screenBelow(num);
+        if (below < 0) {
+            return;
+        }
+        setScreen(below);
     }
+
+    public void setScreen(int screenNumber) {
+        if (fromMipmap) {
+            return;
+        }
+        num = screenNumber;
+        loadCurrent();
+    }
+
     public boolean isLast() {
-        if( num< midmaps.length -1 ) return false;
-        else return true;
+        if (fromMipmap) {
+            return true;
+        }
+        return LevelMaskParser.screenAbove(num) < 0;
     }
 
     public boolean isFirst() {
-        if( num > 0 ) return false;
-        else return true;
+        if (fromMipmap) {
+            return true;
+        }
+        return LevelMaskParser.screenBelow(num) < 0;
     }
 }

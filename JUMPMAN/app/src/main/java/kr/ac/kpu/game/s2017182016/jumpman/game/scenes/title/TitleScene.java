@@ -41,7 +41,7 @@ public class TitleScene extends Scene {
         initLayers(Layer.COUNT.ordinal());
 
 
-        add(Layer.bg, new Midground(R.mipmap.title_bg));
+        add(Layer.bg, new Midground(R.mipmap.title_bg, true));
         int lx = (iw/2) * w / iw ;
         int ly = (82) * h / ih;
 

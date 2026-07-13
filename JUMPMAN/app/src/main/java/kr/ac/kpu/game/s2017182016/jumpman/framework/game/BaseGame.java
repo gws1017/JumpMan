@@ -5,6 +5,7 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.RectF;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.MotionEvent;
 
 import java.util.ArrayList;
@@ -15,6 +16,7 @@ import kr.ac.kpu.game.s2017182016.jumpman.framework.iface.BoxCollidable;
 import kr.ac.kpu.game.s2017182016.jumpman.framework.iface.GameObject;
 import kr.ac.kpu.game.s2017182016.jumpman.framework.iface.Recyclable;
 import kr.ac.kpu.game.s2017182016.jumpman.framework.view.GameView;
+import kr.ac.kpu.game.s2017182016.jumpman.game.scenes.main.MainScene;
 
 public class BaseGame {
     private static final String TAG = BaseGame.class.getSimpleName();
@@ -140,5 +142,13 @@ public class BaseGame {
 
     public boolean onTouchEvent(MotionEvent event) {
         return getTopScene().onTouchEvent(event);
+    }
+
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        Scene top = getTopScene();
+        if (top instanceof MainScene) {
+            return ((MainScene) top).onKeyDown(keyCode);
+        }
+        return false;
     }
 }

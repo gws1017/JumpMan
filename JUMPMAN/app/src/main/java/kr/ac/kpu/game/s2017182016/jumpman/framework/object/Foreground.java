@@ -5,89 +5,70 @@ import android.graphics.Canvas;
 import android.graphics.Rect;
 import android.graphics.RectF;
 
-import kr.ac.kpu.game.s2017182016.jumpman.R;
-import kr.ac.kpu.game.s2017182016.jumpman.framework.bitmap.GameBitmap;
 import kr.ac.kpu.game.s2017182016.jumpman.framework.iface.GameObject;
+import kr.ac.kpu.game.s2017182016.jumpman.framework.util.AssetBitmap;
 import kr.ac.kpu.game.s2017182016.jumpman.framework.view.GameView;
+import kr.ac.kpu.game.s2017182016.jumpman.game.LevelMaskParser;
 
 public class Foreground implements GameObject {
-
-    public static final int MAG = 5;
-    //    private static int w;
-//    private static int h;
-//    private static int imageWidth;
-//    private static int imageHeight;
-//    private static int bgLeft;
-//    private static int bgRight;
     public static Bitmap fgbitmap;
-
-    private int[] foremaps = {
-            R.mipmap.fg1,
-            R.mipmap.fg2,
-            R.mipmap.fg3,
-            R.mipmap.fg4,
-            R.mipmap.fg5,
-            R.mipmap.fg6,
-            R.mipmap.transparent,
-    };
-
     public Rect srcRect = new Rect();
     public RectF dstRect = new RectF();
-    public int num = 0;
+    public int num;
 
-    public Foreground(int resId){
+    public Foreground(int screenNumber) {
+        this.num = screenNumber;
+        loadCurrent();
+    }
 
-        fgbitmap = GameBitmap.load(foremaps[num]);
-        int w = fgbitmap.getWidth();
-        int h = fgbitmap.getHeight();
-        srcRect.set(0,0,w,h);
-        float l = 0;
-        float t = 0;
-        float b = GameView.view.getHeight();
-        float r = GameView.view.getWidth();
-
-        dstRect.set(l,t,r,b);
-//        if(bitmap == null)
-//        {
-//            Resources res = GameView.view.getResources();
-//            bitmap = BitmapFactory.decodeResource(res, R.mipmap.bg_1);
-//
-//            w = GameView.view.getWidth();
-//            h = GameView.view.getHeight();
-//
-//            imageWidth = bitmap.getWidth();
-//            imageHeight = bitmap.getHeight();
-//
-//            bgLeft = w/2 - imageWidth*MAG/2;
-//            bgRight = w/2 + imageWidth*MAG/2;
-//            dstRect = new Rect(bgLeft,0,bgRight,h);
-//
-//        }
+    private void loadCurrent() {
+        Bitmap bmp = AssetBitmap.load(GameView.view.getContext(), "foreground/fg" + num + ".png");
+        fgbitmap = bmp;
+        if (bmp == null) {
+            srcRect.set(0, 0, 1, 1);
+        } else {
+            srcRect.set(0, 0, bmp.getWidth(), bmp.getHeight());
+        }
+        dstRect.set(0, 0, GameView.view.getWidth(), GameView.view.getHeight());
     }
 
     @Override
     public void update() {
-
     }
 
     @Override
     public void draw(Canvas canvas) {
-        canvas.drawBitmap(fgbitmap,srcRect,dstRect,null);
+        if (fgbitmap != null) {
+            canvas.drawBitmap(fgbitmap, srcRect, dstRect, null);
+        }
     }
 
     public void nextimg() {
-        this.fgbitmap = GameBitmap.load(foremaps[++num]);
+        int above = LevelMaskParser.screenAbove(num);
+        if (above < 0) {
+            return;
+        }
+        setScreen(above);
     }
+
     public void previmg() {
-        this.fgbitmap = GameBitmap.load(foremaps[--num]);
+        int below = LevelMaskParser.screenBelow(num);
+        if (below < 0) {
+            return;
+        }
+        setScreen(below);
     }
+
+    public void setScreen(int screenNumber) {
+        num = screenNumber;
+        loadCurrent();
+    }
+
     public boolean isLast() {
-        if( num< foremaps.length -1 ) return false;
-        else return true;
+        return LevelMaskParser.screenAbove(num) < 0;
     }
 
     public boolean isFirst() {
-        if( num > 0 ) return false;
-        else return true;
+        return LevelMaskParser.screenBelow(num) < 0;
     }
 }

@@ -5,6 +5,7 @@ import android.graphics.Canvas;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.Choreographer;
+import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
 
@@ -27,6 +28,8 @@ public class GameView extends View {
         GameView.view = this;
         Sound.init(context);
         running = true;
+        setFocusable(true);
+        setFocusableInTouchMode(true);
     }
 
     @Override
@@ -35,6 +38,7 @@ public class GameView extends View {
         Log.d(TAG,"null? "+ game.frameTime);
         boolean justInitialized = game.initResources();
         if (justInitialized) {
+            requestFocus();
             requestCallback();
         }
     }
@@ -75,5 +79,14 @@ public class GameView extends View {
     public boolean onTouchEvent(MotionEvent event) {
         BaseGame game = BaseGame.get();
         return game.onTouchEvent(event);
+    }
+
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        BaseGame game = BaseGame.get();
+        if (game != null && game.onKeyDown(keyCode, event)) {
+            return true;
+        }
+        return super.onKeyDown(keyCode, event);
     }
 }

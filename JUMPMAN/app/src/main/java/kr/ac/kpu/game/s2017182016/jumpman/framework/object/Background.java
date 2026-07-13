@@ -5,78 +5,70 @@ import android.graphics.Canvas;
 import android.graphics.Rect;
 import android.graphics.RectF;
 
-import kr.ac.kpu.game.s2017182016.jumpman.R;
-import kr.ac.kpu.game.s2017182016.jumpman.framework.bitmap.GameBitmap;
 import kr.ac.kpu.game.s2017182016.jumpman.framework.iface.GameObject;
+import kr.ac.kpu.game.s2017182016.jumpman.framework.util.AssetBitmap;
 import kr.ac.kpu.game.s2017182016.jumpman.framework.view.GameView;
+import kr.ac.kpu.game.s2017182016.jumpman.game.LevelMaskParser;
 
 public class Background implements GameObject {
-
-    public static final int MAG = 5;
-    //    private static int w;
-//    private static int h;
-//    private static int imageWidth;
-//    private static int imageHeight;
-//    private static int bgLeft;
-//    private static int bgRight;
     public static Bitmap bgbitmap;
-    private int[] backmaps = {
-            R.mipmap.transparent,
-            R.mipmap.transparent,
-            R.mipmap.transparent,
-            R.mipmap.bg4,
-            R.mipmap.bg5,
-            R.mipmap.bg6,
-            R.mipmap.transparent,
-    };
-
-
     public Rect srcRect = new Rect();
     public RectF dstRect = new RectF();
-    public int num = 0;
+    public int num;
 
-    public Background(int resId){
+    public Background(int screenNumber) {
+        this.num = screenNumber;
+        loadCurrent();
+    }
 
-        if(backmaps[num] != 0) {
-            bgbitmap = GameBitmap.load(backmaps[num]);
-            int w = bgbitmap.getWidth();
-            int h = bgbitmap.getHeight();
-            srcRect.set(0,0,w,h);
-            float l = 0;
-            float t = 0;
-            float b = GameView.view.getHeight();
-            float r = GameView.view.getWidth();
-
-            dstRect.set(l,t,r,b);
+    private void loadCurrent() {
+        Bitmap bmp = AssetBitmap.load(GameView.view.getContext(), "background/bg" + num + ".png");
+        bgbitmap = bmp;
+        if (bmp == null) {
+            srcRect.set(0, 0, 1, 1);
+        } else {
+            srcRect.set(0, 0, bmp.getWidth(), bmp.getHeight());
         }
-
+        dstRect.set(0, 0, GameView.view.getWidth(), GameView.view.getHeight());
     }
 
     @Override
     public void update() {
-
     }
 
     @Override
     public void draw(Canvas canvas) {
-        if(num>2) canvas.drawBitmap(bgbitmap,srcRect,dstRect,null);
+        if (bgbitmap != null) {
+            canvas.drawBitmap(bgbitmap, srcRect, dstRect, null);
+        }
     }
 
     public void nextimg() {
-        ++num;
-        if(backmaps[num]!= 0)this.bgbitmap = GameBitmap.load(backmaps[num]);
+        int above = LevelMaskParser.screenAbove(num);
+        if (above < 0) {
+            return;
+        }
+        setScreen(above);
     }
+
     public void previmg() {
-        --num;
-        if(backmaps[num]!= 0)this.bgbitmap = GameBitmap.load(backmaps[num]);
+        int below = LevelMaskParser.screenBelow(num);
+        if (below < 0) {
+            return;
+        }
+        setScreen(below);
     }
+
+    public void setScreen(int screenNumber) {
+        num = screenNumber;
+        loadCurrent();
+    }
+
     public boolean isLast() {
-        if( num< backmaps.length -1 ) return false;
-        else return true;
+        return LevelMaskParser.screenAbove(num) < 0;
     }
 
     public boolean isFirst() {
-        if( num > 0 ) return false;
-        else return true;
+        return LevelMaskParser.screenBelow(num) < 0;
     }
 }
