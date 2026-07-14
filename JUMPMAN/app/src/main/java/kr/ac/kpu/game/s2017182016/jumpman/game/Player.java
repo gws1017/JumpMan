@@ -18,16 +18,19 @@ import kr.ac.kpu.game.s2017182016.jumpman.framework.object.Midground;
 import kr.ac.kpu.game.s2017182016.jumpman.framework.util.Sound;
 import kr.ac.kpu.game.s2017182016.jumpman.framework.view.GameView;
 import kr.ac.kpu.game.s2017182016.jumpman.framework.view.Joystick;
+import kr.ac.kpu.game.s2017182016.jumpman.framework.view.LeftRightPad;
 import kr.ac.kpu.game.s2017182016.jumpman.game.scenes.main.MainGame;
 import kr.ac.kpu.game.s2017182016.jumpman.game.scenes.main.MainScene;
 
 public class Player implements GameObject, BoxCollidable {
 
     private static final float MAX_SPEED = 300.0f*GameView.view.getWidth()/2200;
-    private static final float SLOPE_SLIDE_SPEED = 220.0f * GameView.view.getWidth() / 2200;
+    private static final float SLOPE_SLIDE_SPEED = 420.0f * GameView.view.getWidth() / 2200;
     private static final String TAG = Player.class.getSimpleName();
     private static final float JUMPPOWERY = 30;
     private static final float JUMPPOWERX = 18;
+    /** 이 이하면 제자리(수직) 점프 */
+    private static final float VERTICAL_JUMP_DEADZONE = 0.25f;
     private static final float GRAVITY = GameView.view.getHeight()*2050/1003;
     public static final int MAX_JUMPPOWER = GameView.view.getHeight()*43/1003;
     private final Background bg;
@@ -38,6 +41,7 @@ public class Player implements GameObject, BoxCollidable {
     private final IndexedAnimationGameBitmap bitmap;
     private final IndexedAnimationGameBitmap bitmap2;
     private final Joystick joystick;
+    private LeftRightPad movePad;
     private double velocityX;
     private double jumpX;
     private double velocityY;
@@ -133,7 +137,21 @@ public class Player implements GameObject, BoxCollidable {
         this.ground_y = y;
         this.ground_y2 = 1500;
         Sound.init(GameView.view.getContext());
+    }
 
+    public void setMovePad(LeftRightPad movePad) {
+        this.movePad = movePad;
+    }
+
+    /** 좌우 패드 우선, 없으면 조이스틱 X. -1~1 */
+    public float getMoveInputX() {
+        if (movePad != null) {
+            int dir = movePad.getDirection();
+            if (dir != 0) {
+                return dir;
+            }
+        }
+        return (float) joystick.getActuatorX();
     }
 
     public void update() {
@@ -143,7 +161,18 @@ public class Player implements GameObject, BoxCollidable {
         float foot = y + collisionOffsetRect.bottom * GameView.MULTIPLIER;
 
         if (state == State.ready) {
-            chargetime += 60*game.frameTime*GameView.view.getHeight()/1003;
+            float aimX = getMoveInputX();
+            int face = isInverse;
+            if (aimX > VERTICAL_JUMP_DEADZONE) {
+                face = 1;
+            } else if (aimX < -VERTICAL_JUMP_DEADZONE) {
+                face = -1;
+            }
+            if (face != isInverse) {
+                isInverse = face;
+                setState(State.ready);
+            }
+            chargetime += 60 * game.frameTime * GameView.view.getHeight() / 1003;
             if (chargetime > MAX_JUMPPOWER) {
                 jump();
                 return;
@@ -243,16 +272,17 @@ public class Player implements GameObject, BoxCollidable {
                 // Red slope: keep sliding, no stand still
             } else {
                 px = x;
-                velocityX = joystick.getActuatorX() * MAX_SPEED * game.frameTime;
+                float moveX = getMoveInputX();
+                velocityX = moveX * MAX_SPEED * game.frameTime;
                 x += velocityX;
                 getBoundingRect(collisionRect);
                 if (CollisionDetect(collisionRect)) x = px;
 
-                if (velocityX > 0) {
+                if (moveX > VERTICAL_JUMP_DEADZONE) {
                     isInverse = 1;
                     directionX = 1;
                     setState(State.move);
-                } else if (velocityX < 0) {
+                } else if (moveX < -VERTICAL_JUMP_DEADZONE) {
                     isInverse = -1;
                     directionX = -1;
                     setState(State.move);
@@ -354,15 +384,15 @@ public class Player implements GameObject, BoxCollidable {
         directionX = dir;
         isInverse = dir;
         // falling uses abs(jumpX)*dt / 1.5 — keep enough speed to actually slide
-        jumpX = SLOPE_SLIDE_SPEED * 1.5;
+        jumpX = SLOPE_SLIDE_SPEED * 1.8;
         velocityX = SLOPE_SLIDE_SPEED * dir * frameTime;
         x += velocityX;
         getBoundingRect(collisionRect);
         if (CollisionDetect(collisionRect)) {
             x -= velocityX;
         }
-        if (velocityY < 40) {
-            velocityY = 80;
+        if (velocityY < 80) {
+            velocityY = 140;
         }
         setState(State.falling);
         return true;
@@ -494,25 +524,27 @@ public class Player implements GameObject, BoxCollidable {
         setState(State.idle);
     }
 
-     // 43: 1003 = ? vh2
     public void jump() {
-        MainGame game =MainGame.get();
-
-         if(state == State.ready){
-             Sound.play(R.raw.king_jump);
+        if (state == State.ready) {
+            Sound.play(R.raw.king_jump);
             setState(State.jump);
-            // Jump the way the player is facing (isInverse: 1=right, -1=left)
-            directionX = isInverse;
-            velocityY = -JUMPPOWERY *this.chargetime;
-            jumpX = JUMPPOWERX * this.chargetime;
-            if(MAX_JUMPPOWER*0.6 > chargetime) jumpX *= 1.8;
-        }
-        else{
-           //Log.d(TAG,"Not in a state that can't jump " + state);
-            return;
-        }
+            velocityY = -JUMPPOWERY * this.chargetime;
+
+            float moveX = getMoveInputX();
+            if (Math.abs(moveX) <= VERTICAL_JUMP_DEADZONE) {
+                // 제자리 → 수직 점프
+                jumpX = 0;
+                directionX = isInverse == 0 ? 1 : isInverse;
+            } else {
+                directionX = moveX > 0 ? 1 : -1;
+                isInverse = directionX;
+                jumpX = JUMPPOWERX * this.chargetime;
+                if (MAX_JUMPPOWER * 0.6 > chargetime) {
+                    jumpX *= 1.8;
+                }
+            }
             this.prevchargetime = this.chargetime;
             this.chargetime = 0;
-
+        }
     }
 }

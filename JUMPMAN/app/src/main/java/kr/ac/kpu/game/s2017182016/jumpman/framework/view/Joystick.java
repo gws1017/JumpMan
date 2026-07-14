@@ -8,20 +8,20 @@ import kr.ac.kpu.game.s2017182016.jumpman.framework.iface.GameObject;
 
 public class Joystick implements GameObject {
 
-    private Paint inCP;
-    private Paint outCP;
-    private int inCR;
-    private int outCR;
+    private final Paint inCP;
+    private final Paint outCP;
+    private final int inCR;
+    private final int outCR;
     private int inCCY;
     private int inCCX;
-    private int outCCY;
-    private int outCCX;
-    private double joystickCircle2TouchDistance;
+    private final int outCCY;
+    private final int outCCX;
     private boolean isPressed;
+    private int pointerId = -1;
     private double actuatorX;
     private double actuatorY;
 
-    public Joystick(int centerX, int centerY, int outCR, int inCR){
+    public Joystick(int centerX, int centerY, int outCR, int inCR) {
         outCCX = centerX;
         outCCY = centerY;
         inCCX = centerX;
@@ -29,16 +29,14 @@ public class Joystick implements GameObject {
 
         this.outCR = outCR;
         this.inCR = inCR;
-        outCP = new Paint();
-        outCP.setColor(Color.GRAY);
+        outCP = new Paint(Paint.ANTI_ALIAS_FLAG);
+        outCP.setColor(Color.argb(120, 90, 90, 100));
         outCP.setStyle(Paint.Style.FILL_AND_STROKE);
 
-        inCP = new Paint();
-        inCP.setColor(Color.BLUE);
+        inCP = new Paint(Paint.ANTI_ALIAS_FLAG);
+        inCP.setColor(Color.argb(180, 80, 130, 220));
         inCP.setStyle(Paint.Style.FILL_AND_STROKE);
-
     }
-
 
     @Override
     public void update() {
@@ -46,41 +44,31 @@ public class Joystick implements GameObject {
     }
 
     private void updateInCircle() {
-        inCCX = (int) (outCCX + actuatorX*outCR);
-        inCCY = (int) (outCCY + actuatorY*outCR);
+        inCCX = (int) (outCCX + actuatorX * outCR);
+        inCCY = (int) (outCCY + actuatorY * outCR);
     }
 
     @Override
     public void draw(Canvas canvas) {
-        canvas.drawCircle(
-                outCCX,
-                outCCY,
-                outCR,
-                outCP
-        );
-        canvas.drawCircle(
-                inCCX,
-                inCCY,
-                inCR,
-                inCP
-        );
+        canvas.drawCircle(outCCX, outCCY, outCR, outCP);
+        canvas.drawCircle(inCCX, inCCY, inCR, inCP);
     }
 
     public boolean isPressed(double touchX, double touchY) {
-        joystickCircle2TouchDistance = Math.sqrt(
+        double distance = Math.sqrt(
                 Math.pow(outCCX - touchX, 2) +
-                Math.pow(outCCY - touchY, 2)
+                        Math.pow(outCCY - touchY, 2)
         );
-        return joystickCircle2TouchDistance < outCR;
+        return distance < outCR;
     }
 
-    /** Joystick 주변(반지름의 약 2.8배)에서는 점프 입력을 막는다. */
+    /** Joystick 주변에서는 점프 입력을 막는다. */
     public boolean blocksJump(double touchX, double touchY) {
         double distance = Math.sqrt(
                 Math.pow(outCCX - touchX, 2) +
-                Math.pow(outCCY - touchY, 2)
+                        Math.pow(outCCY - touchY, 2)
         );
-        return distance < outCR * 2.8f;
+        return distance < outCR * 2.2f;
     }
 
     public int getOutCCX() {
@@ -95,24 +83,36 @@ public class Joystick implements GameObject {
         return outCR;
     }
 
-    public void setIsPressed(boolean isPressed) {
-        this.isPressed = isPressed;
+    public void setIsPressed(boolean pressed) {
+        this.isPressed = pressed;
+        if (!pressed) {
+            pointerId = -1;
+        }
+    }
+
+    public void setIsPressed(boolean pressed, int pointerId) {
+        this.isPressed = pressed;
+        this.pointerId = pressed ? pointerId : -1;
     }
 
     public boolean getIsPressed() {
         return isPressed;
     }
 
+    public int getPointerId() {
+        return pointerId;
+    }
+
     public void setActuator(double touchX, double touchY) {
         double dx = touchX - outCCX;
         double dy = touchY - outCCY;
-        double ddistance = Math.sqrt(Math.pow(dx,2)+Math.pow(dy,2));
-        if(ddistance < outCR){
-            actuatorX = dx/outCR;
-            actuatorY = dy/outCR;
-        }else{
-            actuatorX = dx/ddistance;
-            actuatorY = dy/ddistance;
+        double ddistance = Math.sqrt(Math.pow(dx, 2) + Math.pow(dy, 2));
+        if (ddistance < outCR) {
+            actuatorX = dx / outCR;
+            actuatorY = dy / outCR;
+        } else if (ddistance > 0) {
+            actuatorX = dx / ddistance;
+            actuatorY = dy / ddistance;
         }
     }
 
@@ -125,6 +125,7 @@ public class Joystick implements GameObject {
         return actuatorX;
     }
 
-    public double getActuatorY() {return actuatorY;
+    public double getActuatorY() {
+        return actuatorY;
     }
 }

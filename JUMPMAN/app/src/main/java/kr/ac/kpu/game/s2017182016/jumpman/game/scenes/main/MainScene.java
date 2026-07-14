@@ -15,6 +15,7 @@ import kr.ac.kpu.game.s2017182016.jumpman.framework.object.Foreground;
 import kr.ac.kpu.game.s2017182016.jumpman.framework.object.Midground;
 import kr.ac.kpu.game.s2017182016.jumpman.framework.view.GameView;
 import kr.ac.kpu.game.s2017182016.jumpman.framework.view.Joystick;
+import kr.ac.kpu.game.s2017182016.jumpman.framework.view.LeftRightPad;
 import kr.ac.kpu.game.s2017182016.jumpman.game.DebugCheats;
 import kr.ac.kpu.game.s2017182016.jumpman.game.LevelMaskParser;
 import kr.ac.kpu.game.s2017182016.jumpman.game.Player;
@@ -28,9 +29,11 @@ public class MainScene extends Scene {
     public static Foreground fg;
     private Player player;
     private Joystick joystick;
+    private LeftRightPad movePad;
     private DebugCheats debugCheats;
     private MediaPlayer openingBgm;
     private boolean gestureAllowsJump;
+    private int jumpPointerId = -1;
 
     public MediaPlayer forestBgm;
     public MediaPlayer endBgm;
@@ -66,10 +69,18 @@ public class MainScene extends Scene {
             }
         });
 
-        int cx = 70*w/480;
-        int cy = h-70*h/360;
-        int outRadius = h/20*GameView.MULTIPLIER;
-        int inRadius = h/20*GameView.MULTIPLIER /2;
+        // 좌우 패드 (하단 왼쪽) + 큰 조이스틱 (그 위)
+        float btnW = 84f * w / 480f;
+        float btnH = 84f * h / 360f;
+        float gap = 16f * w / 480f;
+        float padLeft = 14f * w / 480f;
+        float padTop = h - btnH - 16f * h / 360f;
+        movePad = new LeftRightPad(padLeft, padTop, btnW, btnH, gap);
+
+        int outRadius = Math.round(h / 12f * GameView.MULTIPLIER);
+        int inRadius = Math.round(outRadius * 0.42f);
+        int cx = Math.round(padLeft + btnW + gap / 2f);
+        int cy = Math.round(padTop - outRadius - 22f * h / 360f);
 
         LevelMaskParser.ensureLoaded(GameView.view.getContext());
         int startScreen = LevelMaskParser.START_SCREEN;
@@ -83,9 +94,11 @@ public class MainScene extends Scene {
 
         joystick = new Joystick(cx, cy, outRadius, inRadius);
         add(Layer.controller, joystick);
+        add(Layer.controller, movePad);
         add(Layer.controller, new StageMap(startScreen));
 
         player = new Player(w / 2, h - (80) * h / 360, joystick);
+        player.setMovePad(movePad);
         add(Layer.player, player);
 
         if (BuildConfig.DEBUG) {
@@ -165,62 +178,100 @@ public class MainScene extends Scene {
     }
 
     @Override
-    public boolean onTouchEvent(MotionEvent event){
-        float x = event.getX();
-        float y = event.getY();
-        switch(event.getAction()){
+    public boolean onTouchEvent(MotionEvent event) {
+        int action = event.getActionMasked();
+        int index = event.getActionIndex();
+        int pointerId = event.getPointerId(index);
+        float x = event.getX(index);
+        float y = event.getY(index);
+
+        switch (action) {
             case MotionEvent.ACTION_DOWN:
-                if (debugCheats != null) {
-                    DebugCheats.Action action = debugCheats.hit(x, y);
-                    if (action != DebugCheats.Action.NONE) {
-                        gestureAllowsJump = false;
-                        switch (action) {
-                            case UP:
-                                warpUp();
-                                break;
-                            case DOWN:
-                                warpDown();
-                                break;
-                            case TOP:
-                                warpToScreen(LevelMaskParser.MAX_SCREEN);
-                                break;
-                        }
-                        return true;
-                    }
-                }
-                if (joystick.isPressed(x, y)) {
-                    joystick.setIsPressed(true);
-                    gestureAllowsJump = false;
-                    player.cancelReady();
-                } else if (joystick.blocksJump(x, y)) {
-                    gestureAllowsJump = false;
-                    player.cancelReady();
-                } else {
-                    gestureAllowsJump = true;
-                    player.ready();
-                }
+            case MotionEvent.ACTION_POINTER_DOWN:
+                onPointerDown(pointerId, x, y);
                 return true;
             case MotionEvent.ACTION_MOVE:
-                if (joystick.getIsPressed()) {
-                    joystick.setActuator(x, y);
-                } else if (gestureAllowsJump) {
-                    player.ready();
+                for (int i = 0; i < event.getPointerCount(); i++) {
+                    onPointerMove(event.getPointerId(i), event.getX(i), event.getY(i));
                 }
                 return true;
             case MotionEvent.ACTION_UP:
+            case MotionEvent.ACTION_POINTER_UP:
+                onPointerUp(pointerId);
+                return true;
             case MotionEvent.ACTION_CANCEL:
-                boolean wasJoystick = joystick.getIsPressed();
+                movePad.reset();
                 joystick.setIsPressed(false);
                 joystick.resetActuator();
-                if (gestureAllowsJump && !wasJoystick) {
-                    player.jump();
-                } else {
+                if (jumpPointerId >= 0) {
                     player.cancelReady();
+                    jumpPointerId = -1;
+                    gestureAllowsJump = false;
                 }
-                gestureAllowsJump = false;
                 return true;
         }
         return false;
+    }
+
+    private void onPointerDown(int pointerId, float x, float y) {
+        if (debugCheats != null) {
+            DebugCheats.Action action = debugCheats.hit(x, y);
+            if (action != DebugCheats.Action.NONE) {
+                switch (action) {
+                    case UP:
+                        warpUp();
+                        break;
+                    case DOWN:
+                        warpDown();
+                        break;
+                    case TOP:
+                        warpToScreen(LevelMaskParser.MAX_SCREEN);
+                        break;
+                }
+                return;
+            }
+        }
+
+        if (movePad.onPointerDown(pointerId, x, y)) {
+            return;
+        }
+        if (joystick.isPressed(x, y)) {
+            joystick.setIsPressed(true, pointerId);
+            joystick.setActuator(x, y);
+            return;
+        }
+        if (joystick.blocksJump(x, y) || movePad.blocksJump(x, y)) {
+            return;
+        }
+
+        // 빈 화면 터치 = 점프 차징 (다른 손가락으로 좌우 가능)
+        jumpPointerId = pointerId;
+        gestureAllowsJump = true;
+        player.ready();
+    }
+
+    private void onPointerMove(int pointerId, float x, float y) {
+        movePad.onPointerMove(pointerId, x, y);
+        if (joystick.getIsPressed() && joystick.getPointerId() == pointerId) {
+            joystick.setActuator(x, y);
+        }
+    }
+
+    private void onPointerUp(int pointerId) {
+        movePad.onPointerUp(pointerId);
+        if (joystick.getPointerId() == pointerId) {
+            joystick.setIsPressed(false);
+            joystick.resetActuator();
+        }
+        if (jumpPointerId == pointerId) {
+            if (gestureAllowsJump) {
+                player.jump();
+            } else {
+                player.cancelReady();
+            }
+            jumpPointerId = -1;
+            gestureAllowsJump = false;
+        }
     }
 
     public boolean onKeyDown(int keyCode) {
