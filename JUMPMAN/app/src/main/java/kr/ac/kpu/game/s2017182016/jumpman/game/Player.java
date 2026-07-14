@@ -29,8 +29,8 @@ public class Player implements GameObject, BoxCollidable {
     private static final String TAG = Player.class.getSimpleName();
     private static final float JUMPPOWERY = 30;
     private static final float JUMPPOWERX = 18;
-    /** 이 이하면 제자리(수직) 점프 */
-    private static final float VERTICAL_JUMP_DEADZONE = 0.25f;
+    /** 조이스틱을 위로 당긴 정도로 제자리 점프 판정 */
+    private static final float JOYSTICK_UP_THRESHOLD = -0.4f;
     private static final float GRAVITY = GameView.view.getHeight()*2050/1003;
     public static final int MAX_JUMPPOWER = GameView.view.getHeight()*43/1003;
     private final Background bg;
@@ -60,7 +60,7 @@ public class Player implements GameObject, BoxCollidable {
     private int[] ANIM_INDICES_INV_Jump = {102};
     private int[] ANIM_INDICES_Falling = {102};
     private int[] ANIM_INDICES_INV_Falling = {101};
-    private Rect COL_BOX_OFFSETS_IDLE = new Rect(-15, -15, 15, 15);
+    private Rect COL_BOX_OFFSETS_IDLE = new Rect(-15, -12, 15, 15);
     private Rect collisionOffsetRect = COL_BOX_OFFSETS_IDLE;
     private float playerWidth = 35;
     private float px;
@@ -145,13 +145,22 @@ public class Player implements GameObject, BoxCollidable {
 
     /** 좌우 패드 우선, 없으면 조이스틱 X. -1~1 */
     public float getMoveInputX() {
-        if (movePad != null) {
+        if (movePad != null && movePad.isEnabled()) {
             int dir = movePad.getDirection();
             if (dir != 0) {
                 return dir;
             }
+            return 0f;
         }
         return (float) joystick.getActuatorX();
+    }
+
+    /** 상단 유지(십자 ▲) 또는 조이스틱 위로 드래그 */
+    public boolean wantsVerticalJump() {
+        if (movePad != null && movePad.isEnabled()) {
+            return movePad.isHoldingUp();
+        }
+        return joystick.getActuatorY() <= JOYSTICK_UP_THRESHOLD;
     }
 
     public void update() {
@@ -161,11 +170,12 @@ public class Player implements GameObject, BoxCollidable {
         float foot = y + collisionOffsetRect.bottom * GameView.MULTIPLIER;
 
         if (state == State.ready) {
+            // 점프 차징 중: 좌우 이동 정지, 바라보는 방향만 갱신
             float aimX = getMoveInputX();
             int face = isInverse;
-            if (aimX > VERTICAL_JUMP_DEADZONE) {
+            if (aimX > 0.2f) {
                 face = 1;
-            } else if (aimX < -VERTICAL_JUMP_DEADZONE) {
+            } else if (aimX < -0.2f) {
                 face = -1;
             }
             if (face != isInverse) {
@@ -278,11 +288,11 @@ public class Player implements GameObject, BoxCollidable {
                 getBoundingRect(collisionRect);
                 if (CollisionDetect(collisionRect)) x = px;
 
-                if (moveX > VERTICAL_JUMP_DEADZONE) {
+                if (moveX > 0.2f) {
                     isInverse = 1;
                     directionX = 1;
                     setState(State.move);
-                } else if (moveX < -VERTICAL_JUMP_DEADZONE) {
+                } else if (moveX < -0.2f) {
                     isInverse = -1;
                     directionX = -1;
                     setState(State.move);
@@ -497,11 +507,8 @@ public class Player implements GameObject, BoxCollidable {
         );
     }
     public void ready() {
-        if(state == State.idle) {
+        if (state == State.idle || state == State.move) {
             setState(State.ready);
-        }else{
-            //
-            return;
         }
     }
 
@@ -530,14 +537,11 @@ public class Player implements GameObject, BoxCollidable {
             setState(State.jump);
             velocityY = -JUMPPOWERY * this.chargetime;
 
-            float moveX = getMoveInputX();
-            if (Math.abs(moveX) <= VERTICAL_JUMP_DEADZONE) {
-                // 제자리 → 수직 점프
+            // 기본: 바라보는 방향으로 점프. ▲/조이 위 = 제자리(수직)
+            directionX = isInverse == 0 ? 1 : isInverse;
+            if (wantsVerticalJump()) {
                 jumpX = 0;
-                directionX = isInverse == 0 ? 1 : isInverse;
             } else {
-                directionX = moveX > 0 ? 1 : -1;
-                isInverse = directionX;
                 jumpX = JUMPPOWERX * this.chargetime;
                 if (MAX_JUMPPOWER * 0.6 > chargetime) {
                     jumpX *= 1.8;

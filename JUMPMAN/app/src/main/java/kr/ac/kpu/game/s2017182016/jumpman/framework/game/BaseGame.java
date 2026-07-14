@@ -11,10 +11,10 @@ import android.view.MotionEvent;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import kr.ac.kpu.game.s2017182016.jumpman.BuildConfig;
 import kr.ac.kpu.game.s2017182016.jumpman.framework.iface.BoxCollidable;
 import kr.ac.kpu.game.s2017182016.jumpman.framework.iface.GameObject;
 import kr.ac.kpu.game.s2017182016.jumpman.framework.iface.Recyclable;
+import kr.ac.kpu.game.s2017182016.jumpman.framework.util.GameSettings;
 import kr.ac.kpu.game.s2017182016.jumpman.framework.view.GameView;
 import kr.ac.kpu.game.s2017182016.jumpman.game.scenes.main.MainScene;
 
@@ -32,12 +32,11 @@ public class BaseGame {
 
     protected BaseGame(){
         instance = this;
-        if(BuildConfig.showsCollisionBox){
-            collisionRect = new RectF();
-            collisionPaint = new Paint();
-            collisionPaint.setStyle(Paint.Style.STROKE);
-            collisionPaint.setColor(Color.RED);
-        }
+        collisionRect = new RectF();
+        collisionPaint = new Paint();
+        collisionPaint.setStyle(Paint.Style.STROKE);
+        collisionPaint.setStrokeWidth(2f);
+        collisionPaint.setColor(Color.RED);
     }
 //    ArrayList<ArrayList<GameObject>> layers;
     private static HashMap<Class, ArrayList<GameObject>> recycleBin = new HashMap<>();
@@ -126,14 +125,14 @@ public class BaseGame {
                 o.draw(canvas);
             }
         }
-        if(BuildConfig.showsCollisionBox){
-            for(ArrayList<GameObject> objects: layers){
-                for(GameObject o : objects){
-                    if(!(o instanceof BoxCollidable)){
+        if (GameSettings.get() != null && GameSettings.get().isShowCollision()) {
+            for (ArrayList<GameObject> objects : layers) {
+                for (GameObject o : objects) {
+                    if (!(o instanceof BoxCollidable)) {
                         continue;
                     }
-                    ((BoxCollidable)o).getBoundingRect(collisionRect);
-                    canvas.drawRect(collisionRect,collisionPaint);
+                    ((BoxCollidable) o).getBoundingRect(collisionRect);
+                    canvas.drawRect(collisionRect, collisionPaint);
                 }
             }
         }

@@ -6,14 +6,13 @@ import android.graphics.Paint;
 import android.graphics.RectF;
 import android.graphics.Typeface;
 
-import kr.ac.kpu.game.s2017182016.jumpman.BuildConfig;
 import kr.ac.kpu.game.s2017182016.jumpman.framework.iface.GameObject;
+import kr.ac.kpu.game.s2017182016.jumpman.framework.util.GameSettings;
 import kr.ac.kpu.game.s2017182016.jumpman.framework.view.GameView;
 import kr.ac.kpu.game.s2017182016.jumpman.game.scenes.main.MainScene;
 
 /**
- * Debug-only on-screen map warp buttons (right edge).
- * UP = next screen, DN = previous, TOP = last screen.
+ * On-screen map warp buttons (right edge). Shown when Options → 치트키 ON.
  */
 public class DebugCheats implements GameObject {
     public final RectF upRect = new RectF();
@@ -58,7 +57,7 @@ public class DebugCheats implements GameObject {
     }
 
     public Action hit(float x, float y) {
-        if (!BuildConfig.DEBUG) {
+        if (!isActive()) {
             return Action.NONE;
         }
         if (topRect.contains(x, y)) {
@@ -73,13 +72,17 @@ public class DebugCheats implements GameObject {
         return Action.NONE;
     }
 
+    public static boolean isActive() {
+        return GameSettings.get() != null && GameSettings.get().isCheatEnabled();
+    }
+
     @Override
     public void update() {
     }
 
     @Override
     public void draw(Canvas canvas) {
-        if (!BuildConfig.DEBUG) {
+        if (!isActive()) {
             return;
         }
         if (MainScene.mg != null) {

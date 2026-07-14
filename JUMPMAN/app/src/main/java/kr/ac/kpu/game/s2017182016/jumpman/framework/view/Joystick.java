@@ -20,6 +20,7 @@ public class Joystick implements GameObject {
     private int pointerId = -1;
     private double actuatorX;
     private double actuatorY;
+    private boolean enabled = true;
 
     public Joystick(int centerX, int centerY, int outCR, int inCR) {
         outCCX = centerX;
@@ -48,13 +49,31 @@ public class Joystick implements GameObject {
         inCCY = (int) (outCCY + actuatorY * outCR);
     }
 
+    public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
+        if (!enabled) {
+            setIsPressed(false);
+            resetActuator();
+        }
+    }
+
+    public boolean isEnabled() {
+        return enabled;
+    }
+
     @Override
     public void draw(Canvas canvas) {
+        if (!enabled) {
+            return;
+        }
         canvas.drawCircle(outCCX, outCCY, outCR, outCP);
         canvas.drawCircle(inCCX, inCCY, inCR, inCP);
     }
 
     public boolean isPressed(double touchX, double touchY) {
+        if (!enabled) {
+            return false;
+        }
         double distance = Math.sqrt(
                 Math.pow(outCCX - touchX, 2) +
                         Math.pow(outCCY - touchY, 2)
@@ -64,6 +83,9 @@ public class Joystick implements GameObject {
 
     /** Joystick 주변에서는 점프 입력을 막는다. */
     public boolean blocksJump(double touchX, double touchY) {
+        if (!enabled) {
+            return false;
+        }
         double distance = Math.sqrt(
                 Math.pow(outCCX - touchX, 2) +
                         Math.pow(outCCY - touchY, 2)
@@ -122,10 +144,10 @@ public class Joystick implements GameObject {
     }
 
     public double getActuatorX() {
-        return actuatorX;
+        return enabled ? actuatorX : 0.0;
     }
 
     public double getActuatorY() {
-        return actuatorY;
+        return enabled ? actuatorY : 0.0;
     }
 }

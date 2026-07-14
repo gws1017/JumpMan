@@ -6,13 +6,14 @@ import android.view.MotionEvent;
 
 import java.util.ArrayList;
 
-import kr.ac.kpu.game.s2017182016.jumpman.BuildConfig;
 import kr.ac.kpu.game.s2017182016.jumpman.R;
 import kr.ac.kpu.game.s2017182016.jumpman.framework.game.Scene;
 import kr.ac.kpu.game.s2017182016.jumpman.framework.iface.GameObject;
 import kr.ac.kpu.game.s2017182016.jumpman.framework.object.Background;
 import kr.ac.kpu.game.s2017182016.jumpman.framework.object.Foreground;
 import kr.ac.kpu.game.s2017182016.jumpman.framework.object.Midground;
+import kr.ac.kpu.game.s2017182016.jumpman.framework.ui.OptionsEntryButton;
+import kr.ac.kpu.game.s2017182016.jumpman.framework.util.GameSettings;
 import kr.ac.kpu.game.s2017182016.jumpman.framework.view.GameView;
 import kr.ac.kpu.game.s2017182016.jumpman.framework.view.Joystick;
 import kr.ac.kpu.game.s2017182016.jumpman.framework.view.LeftRightPad;
@@ -21,6 +22,7 @@ import kr.ac.kpu.game.s2017182016.jumpman.game.LevelMaskParser;
 import kr.ac.kpu.game.s2017182016.jumpman.game.Player;
 import kr.ac.kpu.game.s2017182016.jumpman.game.Platform;
 import kr.ac.kpu.game.s2017182016.jumpman.game.StageMap;
+import kr.ac.kpu.game.s2017182016.jumpman.game.scenes.options.OptionsScene;
 
 public class MainScene extends Scene {
 
@@ -31,56 +33,68 @@ public class MainScene extends Scene {
     private Joystick joystick;
     private LeftRightPad movePad;
     private DebugCheats debugCheats;
+    private OptionsEntryButton optionsButton;
     private MediaPlayer openingBgm;
     private boolean gestureAllowsJump;
     private int jumpPointerId = -1;
+    private boolean bgmPausedByOptions;
 
     public MediaPlayer forestBgm;
     public MediaPlayer endBgm;
-    public enum Layer{
-        bg,mg,player,fg,platform,controller,LAYER_COUNT
+
+    public enum Layer {
+        bg, mg, player, fg, platform, controller, LAYER_COUNT
     }
 
     public static MainScene scene;
+
     public void add(Layer layer, GameObject obj) {
         add(layer.ordinal(), obj);
     }
+
     public ArrayList<GameObject> objectsAt(Layer layer) {
         return objectsAt(layer.ordinal());
     }
 
     @Override
-    public void start(){
+    public void start() {
         scene = this;
         super.start();
 
         int w = GameView.view.getWidth();
         int h = GameView.view.getHeight();
         initLayers(Layer.LAYER_COUNT.ordinal());
-        openingBgm = MediaPlayer.create(GameView.view.getContext(),R.raw.opening_theme);
-        forestBgm = MediaPlayer.create(GameView.view.getContext(),R.raw.nb_troll_forest);
-        endBgm = MediaPlayer.create(GameView.view.getContext(),R.raw.ending3);
+        openingBgm = MediaPlayer.create(GameView.view.getContext(), R.raw.opening_theme);
+        forestBgm = MediaPlayer.create(GameView.view.getContext(), R.raw.nb_troll_forest);
+        endBgm = MediaPlayer.create(GameView.view.getContext(), R.raw.ending3);
+
+        GameSettings settings = GameSettings.get();
+        settings.applyBgmVolume(openingBgm);
+        settings.applyBgmVolume(forestBgm);
+        settings.applyBgmVolume(endBgm);
+
         openingBgm.start();
         openingBgm.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
             @Override
             public void onCompletion(MediaPlayer mp) {
+                GameSettings.get().applyBgmVolume(forestBgm);
                 forestBgm.setLooping(true);
                 forestBgm.start();
             }
         });
 
-        // 좌우 패드 (하단 왼쪽) + 큰 조이스틱 (그 위)
-        float btnW = 84f * w / 480f;
-        float btnH = 84f * h / 360f;
-        float gap = 16f * w / 480f;
-        float padLeft = 14f * w / 480f;
-        float padTop = h - btnH - 16f * h / 360f;
+        float btnW = 58f * w / 480f;
+        float btnH = 58f * h / 360f;
+        float gap = 8f * w / 480f;
+        float padLeft = 12f * w / 480f;
+        // 십자: 위 1칸 + 아래 좌우 → 전체 높이 = 2*btnH + gap
+        float padTop = h - (btnH * 2f + gap) - 14f * h / 360f;
         movePad = new LeftRightPad(padLeft, padTop, btnW, btnH, gap);
 
         int outRadius = Math.round(h / 12f * GameView.MULTIPLIER);
         int inRadius = Math.round(outRadius * 0.42f);
-        int cx = Math.round(padLeft + btnW + gap / 2f);
-        int cy = Math.round(padTop - outRadius - 22f * h / 360f);
+        int cx = Math.round(padLeft + btnW * 1.5f + gap);
+        int cy = Math.round(padTop - outRadius - 18f * h / 360f);
 
         LevelMaskParser.ensureLoaded(GameView.view.getContext());
         int startScreen = LevelMaskParser.START_SCREEN;
@@ -97,14 +111,88 @@ public class MainScene extends Scene {
         add(Layer.controller, movePad);
         add(Layer.controller, new StageMap(startScreen));
 
+        optionsButton = new OptionsEntryButton(true);
+        add(Layer.controller, optionsButton);
+
         player = new Player(w / 2, h - (80) * h / 360, joystick);
         player.setMovePad(movePad);
         add(Layer.player, player);
 
-        if (BuildConfig.DEBUG) {
-            debugCheats = new DebugCheats();
-            debugCheats.setCurrentScreen(startScreen);
-            add(Layer.controller, debugCheats);
+        debugCheats = new DebugCheats();
+        debugCheats.setCurrentScreen(startScreen);
+        add(Layer.controller, debugCheats);
+
+        applyControlMode();
+    }
+
+    private void applyControlMode() {
+        GameSettings.PadMode mode = GameSettings.get().getPadMode();
+        boolean useDpad = mode == GameSettings.PadMode.DPAD;
+        if (movePad != null) {
+            movePad.setEnabled(useDpad);
+        }
+        if (joystick != null) {
+            joystick.setEnabled(!useDpad);
+        }
+        if (player != null) {
+            player.setMovePad(useDpad ? movePad : null);
+        }
+    }
+
+    public void applyAudioSettings() {
+        GameSettings s = GameSettings.get();
+        s.applyBgmVolume(openingBgm);
+        s.applyBgmVolume(forestBgm);
+        s.applyBgmVolume(endBgm);
+    }
+
+    @Override
+    public void pause() {
+        bgmPausedByOptions = true;
+        pauseIfPlaying(openingBgm);
+        pauseIfPlaying(forestBgm);
+        pauseIfPlaying(endBgm);
+    }
+
+    @Override
+    public void resume() {
+        applyControlMode();
+        applyAudioSettings();
+        if (bgmPausedByOptions) {
+            bgmPausedByOptions = false;
+            resumeBgm();
+        }
+    }
+
+    private void resumeBgm() {
+        try {
+            if (endBgm != null && endBgm.getCurrentPosition() > 0 && !endBgm.isPlaying()) {
+                // if ending was active leave it; heuristic weak — prefer forest/opening
+            }
+            if (forestBgm != null && forestBgm.isLooping()) {
+                GameSettings.get().applyBgmVolume(forestBgm);
+                if (!forestBgm.isPlaying()) {
+                    forestBgm.start();
+                }
+                return;
+            }
+            if (openingBgm != null && !openingBgm.isPlaying()) {
+                GameSettings.get().applyBgmVolume(openingBgm);
+                openingBgm.start();
+            }
+        } catch (IllegalStateException ignored) {
+        }
+    }
+
+    private void pauseIfPlaying(MediaPlayer mp) {
+        if (mp == null) {
+            return;
+        }
+        try {
+            if (mp.isPlaying()) {
+                mp.pause();
+            }
+        } catch (IllegalStateException ignored) {
         }
     }
 
@@ -200,7 +288,9 @@ public class MainScene extends Scene {
                 onPointerUp(pointerId);
                 return true;
             case MotionEvent.ACTION_CANCEL:
-                movePad.reset();
+                if (movePad != null) {
+                    movePad.reset();
+                }
                 joystick.setIsPressed(false);
                 joystick.resetActuator();
                 if (jumpPointerId >= 0) {
@@ -214,6 +304,11 @@ public class MainScene extends Scene {
     }
 
     private void onPointerDown(int pointerId, float x, float y) {
+        if (optionsButton != null && optionsButton.hit(x, y)) {
+            MainGame.get().push(new OptionsScene());
+            return;
+        }
+
         if (debugCheats != null) {
             DebugCheats.Action action = debugCheats.hit(x, y);
             if (action != DebugCheats.Action.NONE) {
@@ -232,34 +327,38 @@ public class MainScene extends Scene {
             }
         }
 
-        if (movePad.onPointerDown(pointerId, x, y)) {
+        if (movePad != null && movePad.onPointerDown(pointerId, x, y)) {
             return;
         }
-        if (joystick.isPressed(x, y)) {
+        if (joystick != null && joystick.isPressed(x, y)) {
             joystick.setIsPressed(true, pointerId);
             joystick.setActuator(x, y);
             return;
         }
-        if (joystick.blocksJump(x, y) || movePad.blocksJump(x, y)) {
+        if ((joystick != null && joystick.blocksJump(x, y))
+                || (movePad != null && movePad.blocksJump(x, y))) {
             return;
         }
 
-        // 빈 화면 터치 = 점프 차징 (다른 손가락으로 좌우 가능)
         jumpPointerId = pointerId;
         gestureAllowsJump = true;
         player.ready();
     }
 
     private void onPointerMove(int pointerId, float x, float y) {
-        movePad.onPointerMove(pointerId, x, y);
-        if (joystick.getIsPressed() && joystick.getPointerId() == pointerId) {
+        if (movePad != null) {
+            movePad.onPointerMove(pointerId, x, y);
+        }
+        if (joystick != null && joystick.getIsPressed() && joystick.getPointerId() == pointerId) {
             joystick.setActuator(x, y);
         }
     }
 
     private void onPointerUp(int pointerId) {
-        movePad.onPointerUp(pointerId);
-        if (joystick.getPointerId() == pointerId) {
+        if (movePad != null) {
+            movePad.onPointerUp(pointerId);
+        }
+        if (joystick != null && joystick.getPointerId() == pointerId) {
             joystick.setIsPressed(false);
             joystick.resetActuator();
         }
@@ -275,7 +374,7 @@ public class MainScene extends Scene {
     }
 
     public boolean onKeyDown(int keyCode) {
-        if (!BuildConfig.DEBUG) {
+        if (!DebugCheats.isActive()) {
             return false;
         }
         switch (keyCode) {

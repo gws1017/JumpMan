@@ -12,6 +12,7 @@ import android.view.View;
 import androidx.annotation.Nullable;
 
 import kr.ac.kpu.game.s2017182016.jumpman.framework.game.BaseGame;
+import kr.ac.kpu.game.s2017182016.jumpman.framework.util.GameSettings;
 import kr.ac.kpu.game.s2017182016.jumpman.framework.util.Sound;
 
 public class GameView extends View {
@@ -26,6 +27,7 @@ public class GameView extends View {
     public GameView(Context context, @Nullable AttributeSet attrs){
         super(context, attrs);
         GameView.view = this;
+        GameSettings.init(context);
         Sound.init(context);
         running = true;
         setFocusable(true);

@@ -36,6 +36,7 @@ public class StageMap implements GameObject {
                     if (scene.forestBgm.isPlaying()) {
                         scene.forestBgm.stop();
                     }
+                    scene.applyAudioSettings();
                     scene.endBgm.start();
                 } catch (IllegalStateException ignored) {
                 }
