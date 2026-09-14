@@ -1,6 +1,8 @@
 package kr.ac.kpu.game.s2017182016.jumpman.game;
 
 import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.media.MediaPlayer;
@@ -69,6 +71,26 @@ public class Player implements GameObject, BoxCollidable {
     private int directionY = 1;
     private boolean collisionHandle = false;
     private float bumpSoundCooldown = 0f;
+
+    // --- 디버그: 점프 게이지 / 궤적·착지 예측 (치트키 ON일 때만 표시) ---
+    private final Paint dbgGaugeBg = new Paint();
+    private final Paint dbgGaugeFill = new Paint();
+    private final Paint dbgText = new Paint();
+    private final Paint dbgTrajectory = new Paint();
+    private final Paint dbgLanding = new Paint();
+    {
+        dbgGaugeBg.setColor(0x99000000);
+        dbgGaugeBg.setStyle(Paint.Style.FILL);
+        dbgGaugeFill.setStyle(Paint.Style.FILL);
+        dbgText.setColor(Color.WHITE);
+        dbgText.setTextAlign(Paint.Align.CENTER);
+        dbgText.setTextSize(11f * GameView.MULTIPLIER);
+        dbgTrajectory.setColor(0xCC00E5FF);
+        dbgTrajectory.setStyle(Paint.Style.FILL);
+        dbgLanding.setColor(0xFFFF3B30);
+        dbgLanding.setStyle(Paint.Style.STROKE);
+        dbgLanding.setStrokeWidth(3f);
+    }
 
 
     private enum State {
@@ -164,6 +186,11 @@ public class Player implements GameObject, BoxCollidable {
     }
 
     public void update() {
+        if (DebugCheats.cameraMode) {
+            // 카메라 모드: 캐릭터 물리(중력·낙하·화면 자동 전환) 정지, 디버그 버튼으로만 화면 이동
+            return;
+        }
+
         MainGame game = MainGame.get();
         MainScene scene =MainScene.scene;
 
@@ -184,6 +211,11 @@ public class Player implements GameObject, BoxCollidable {
             }
             chargetime += 60 * game.frameTime * GameView.view.getHeight() / 1003;
             if (chargetime > MAX_JUMPPOWER) {
+                if (DebugCheats.isActive()) {
+                    // 디버깅: 꽉 차도 자동 점프하지 않고 게이지/궤적을 계속 볼 수 있게 유지, 손 뗄 때만 점프
+                    chargetime = MAX_JUMPPOWER;
+                    return;
+                }
                 jump();
                 return;
             } else return;
@@ -347,14 +379,22 @@ public class Player implements GameObject, BoxCollidable {
     }
 
     private float findNearestPlatformTop() {
-        Platform platform = findNearestPlatform();
+        return findPlatformTopAt(x, y);
+    }
+
+    private Platform findNearestPlatform() {
+        return findNearestPlatformAt(x, y);
+    }
+
+    private float findPlatformTopAt(float px, float py) {
+        Platform platform = findNearestPlatformAt(px, py);
         if (platform == null) {
             return GameView.view.getHeight() - 3;
         }
         return platform.getBoundingRect().top - 3;
     }
 
-    private Platform findNearestPlatform() {
+    private Platform findNearestPlatformAt(float px, float py) {
         ArrayList<GameObject> platforms = MainScene.scene.objectsAt(MainScene.Layer.platform);
         float top = GameView.view.getHeight();
         float offset = 5;
@@ -362,13 +402,13 @@ public class Player implements GameObject, BoxCollidable {
         for (GameObject obj : platforms) {
             Platform platform = (Platform) obj;
             RectF rect = platform.getBoundingRect();
-            if (x + collisionOffsetRect.right * GameView.MULTIPLIER - offset < rect.left) {
+            if (px + collisionOffsetRect.right * GameView.MULTIPLIER - offset < rect.left) {
                 continue;
             }
-            if (x + collisionOffsetRect.left * GameView.MULTIPLIER + offset > rect.right) {
+            if (px + collisionOffsetRect.left * GameView.MULTIPLIER + offset > rect.right) {
                 continue;
             }
-            if (rect.top < y) {
+            if (rect.top < py) {
                 continue;
             }
             if (top > rect.top) {
@@ -494,6 +534,134 @@ public class Player implements GameObject, BoxCollidable {
 
         }
 
+        if (DebugCheats.isActive()) {
+            drawJumpDebug(canvas);
+        }
+    }
+
+    private void drawJumpDebug(Canvas canvas) {
+        if (state == State.ready) {
+            drawChargeGauge(canvas);
+            float previewCharge = Math.min(chargetime, MAX_JUMPPOWER);
+            int dir = isInverse == 0 ? 1 : isInverse;
+            boolean vertical = wantsVerticalJump();
+            double previewJumpX;
+            if (vertical) {
+                previewJumpX = 0;
+            } else {
+                previewJumpX = JUMPPOWERX * previewCharge;
+                if (MAX_JUMPPOWER * 0.6 > previewCharge) {
+                    previewJumpX *= 1.8;
+                }
+            }
+            simulateAndDrawTrajectory(canvas, -JUMPPOWERY * previewCharge, previewJumpX, dir, false);
+        } else if (state == State.jump || state == State.falling) {
+            simulateAndDrawTrajectory(canvas, (float) velocityY, jumpX, directionX, state == State.falling);
+        }
+    }
+
+    private void drawChargeGauge(Canvas canvas) {
+        float mult = GameView.MULTIPLIER;
+        float w = 50f * mult;
+        float h = 8f * mult;
+        float gx = x - w / 2f;
+        float gy = y - 55f * mult;
+        canvas.drawRect(gx, gy, gx + w, gy + h, dbgGaugeBg);
+        float ratio = Math.min(1f, chargetime / MAX_JUMPPOWER);
+        dbgGaugeFill.setColor(chargeColor(ratio));
+        canvas.drawRect(gx, gy, gx + w * ratio, gy + h, dbgGaugeFill);
+        canvas.drawText(Math.round(ratio * 100) + "%", gx + w / 2f, gy - 4f * mult, dbgText);
+    }
+
+    private int chargeColor(float ratio) {
+        int r = (int) (ratio * 255);
+        int g = (int) ((1f - ratio) * 255);
+        return 0xFF000000 | (r << 16) | (g << 8);
+    }
+
+    /** 현재 발사 조건으로 착지 지점까지 궤적을 시뮬레이션해 점선+착지 마커로 그린다. */
+    private void simulateAndDrawTrajectory(Canvas canvas, float launchVelY, double launchJumpX, int launchDir, boolean startFalling) {
+        float mult = GameView.MULTIPLIER;
+        float leftBound = 8f * GameView.view.getWidth() / 480f + playerWidth;
+        float rightBound = 472f * GameView.view.getWidth() / 480f - playerWidth;
+        float screenBottom = GameView.view.getHeight() - 30f * GameView.view.getHeight() / 360f;
+        float dt = 1f / 60f;
+        int maxSteps = 180;
+
+        float simX = x;
+        float simY = y;
+        float simVelY = launchVelY;
+        int dir = launchDir;
+        boolean fallingPhase = startFalling;
+        RectF simRect = new RectF();
+
+        float landX = Float.NaN;
+        float landY = Float.NaN;
+        int step = 0;
+        for (; step < maxSteps; step++) {
+            float dx = (float) (Math.abs(launchJumpX) * dt);
+            if (fallingPhase) dx /= 1.5f;
+
+            float prevX = simX;
+            simX += dir * dx;
+            if (simX < leftBound) simX = leftBound;
+            if (simX > rightBound) simX = rightBound;
+            buildBoundingRectAt(simRect, simX, simY, mult);
+            if (CollisionDetect(simRect)) {
+                simX = prevX;
+                dir *= -1;
+                fallingPhase = true;
+            }
+
+            float foot = simY + collisionOffsetRect.bottom * mult;
+            float platformTop = findPlatformTopAt(simX, simY);
+            float dy = simVelY * dt;
+            if (simVelY >= 0 && (foot + dy) >= platformTop) {
+                simY += platformTop - foot;
+                landX = simX;
+                landY = simY;
+                step++;
+                break;
+            }
+
+            simY += dy;
+            buildBoundingRectAt(simRect, simX, simY, mult);
+            if (CollisionDetect(simRect)) {
+                simY -= dy;
+                landX = simX;
+                landY = simY;
+                step++;
+                break;
+            }
+
+            simVelY += GRAVITY * dt;
+
+            if (simY < 0 || simY >= screenBottom) {
+                landX = simX;
+                landY = simY;
+                step++;
+                break;
+            }
+
+            if (step % 3 == 0) {
+                canvas.drawCircle(simX, simY, 3f * mult, dbgTrajectory);
+            }
+        }
+
+        if (!Float.isNaN(landX)) {
+            canvas.drawCircle(landX, landY, 10f * mult, dbgLanding);
+            canvas.drawLine(landX - 14f * mult, landY, landX + 14f * mult, landY, dbgLanding);
+            canvas.drawLine(landX, landY - 14f * mult, landX, landY + 14f * mult, dbgLanding);
+        }
+    }
+
+    private void buildBoundingRectAt(RectF rect, float px, float py, float mult) {
+        rect.set(
+                px + collisionOffsetRect.left * mult,
+                py + collisionOffsetRect.top * mult,
+                px + collisionOffsetRect.right * mult,
+                py + collisionOffsetRect.bottom * mult
+        );
     }
 
     @Override

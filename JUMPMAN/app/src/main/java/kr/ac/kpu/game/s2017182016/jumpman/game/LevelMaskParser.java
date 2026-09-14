@@ -33,7 +33,11 @@ public class LevelMaskParser {
 
     public static final int START_SCREEN = 1;
     public static final int MIN_SCREEN = 1;
-    public static final int MAX_SCREEN = 164;
+    /**
+     * 본편(원작 Jump King)만 구현 — 44는 콜리전 없는 빈 화면, 45부터는 DLC.
+     * 43이 진짜 마지막 화면(탑 꼭대기, 엔딩 아트)이라 여기서 끊는다.
+     */
+    public static final int MAX_SCREEN = 43;
 
     /** true = climb by increasing screen number (matches midground 1.png → 2.png …) */
     public static final boolean USE_SEQUENTIAL_CLIMB = true;

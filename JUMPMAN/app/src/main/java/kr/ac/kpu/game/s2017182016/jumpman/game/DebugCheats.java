@@ -18,14 +18,21 @@ public class DebugCheats implements GameObject {
     public final RectF upRect = new RectF();
     public final RectF downRect = new RectF();
     public final RectF topRect = new RectF();
+    public final RectF camRect = new RectF();
     private final Paint fillPaint = new Paint();
+    private final Paint camOnPaint = new Paint();
     private final Paint textPaint = new Paint();
     private final Paint labelPaint = new Paint();
     private int currentScreen = 1;
 
+    /** 카메라 모드: ON이면 캐릭터 물리(중력·낙하·화면 자동 전환)가 멈추고, UP/DOWN 버튼으로 화면만 이동한다. */
+    public static boolean cameraMode = false;
+
     public DebugCheats() {
         fillPaint.setColor(0x99000000);
         fillPaint.setStyle(Paint.Style.FILL);
+        camOnPaint.setColor(0xCC2ECC71);
+        camOnPaint.setStyle(Paint.Style.FILL);
         textPaint.setColor(Color.WHITE);
         textPaint.setTextAlign(Paint.Align.CENTER);
         textPaint.setTypeface(Typeface.DEFAULT_BOLD);
@@ -44,6 +51,7 @@ public class DebugCheats implements GameObject {
         upRect.set(x, m + bh + m, x + bw, m + bh + m + bh);
         topRect.set(x, m, x + bw, m + bh);
         downRect.set(x, h - m - bh, x + bw, h - m);
+        camRect.set(x - bw - m, downRect.top, x - m, downRect.bottom);
         textPaint.setTextSize(bh * 0.35f);
         labelPaint.setTextSize(bh * 0.22f);
     }
@@ -53,7 +61,7 @@ public class DebugCheats implements GameObject {
     }
 
     public enum Action {
-        NONE, UP, DOWN, TOP
+        NONE, UP, DOWN, TOP, CAM_TOGGLE
     }
 
     public Action hit(float x, float y) {
@@ -68,6 +76,9 @@ public class DebugCheats implements GameObject {
         }
         if (downRect.contains(x, y)) {
             return Action.DOWN;
+        }
+        if (camRect.contains(x, y)) {
+            return Action.CAM_TOGGLE;
         }
         return Action.NONE;
     }
@@ -91,6 +102,9 @@ public class DebugCheats implements GameObject {
         drawButton(canvas, topRect, "TOP");
         drawButton(canvas, upRect, "▲");
         drawButton(canvas, downRect, "▼");
+        canvas.drawRoundRect(camRect, 12, 12, cameraMode ? camOnPaint : fillPaint);
+        canvas.drawText("CAM", camRect.centerX(),
+                camRect.centerY() - (textPaint.ascent() + textPaint.descent()) / 2f, textPaint);
         canvas.drawText("S" + currentScreen, upRect.centerX(),
                 upRect.bottom + labelPaint.getTextSize(), labelPaint);
     }

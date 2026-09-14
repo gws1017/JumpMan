@@ -238,6 +238,7 @@ public class MainScene extends Scene {
         }
     }
 
+
     public void warpBy(int delta) {
         int target = mg.num + delta;
         if (delta > 0) {
@@ -324,6 +325,9 @@ public class MainScene extends Scene {
                         break;
                     case TOP:
                         warpToScreen(LevelMaskParser.MAX_SCREEN);
+                        break;
+                    case CAM_TOGGLE:
+                        DebugCheats.cameraMode = !DebugCheats.cameraMode;
                         break;
                 }
                 return;
