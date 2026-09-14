@@ -317,19 +317,29 @@ public class Player implements GameObject, BoxCollidable {
                         setState(State.falling);
                         playBumpSound();
                     } else {
-                        // Falling into geometry: snap onto nearest top if possible
-                        y = prevY;
-                        foot = y + collisionOffsetRect.bottom * GameView.MULTIPLIER;
-                        platformTop = findNearestPlatformTop();
-                        if (foot + 4 >= platformTop) {
-                            y = platformTop - collisionOffsetRect.bottom * GameView.MULTIPLIER;
-                            velocityY = 0;
-                            Sound.play(R.raw.king_land);
-                            if (!tryStartSlopeSlide(game.frameTime)) {
-                                landOnGround(dx);
+                        // Falling into geometry: findNearestPlatformTop()은 발판의 x범위 안에
+                        // 있고 "내 위치보다 아래(rect.top >= py)"인 경우만 후보로 보는데, 천장부터
+                        // 길게 이어진 세로 장식(샹들리에 기둥 등)처럼 rect.top이 훨씬 위에 있는
+                        // 발판은 이미 부딪히고 있어도 후보에서 제외돼서 못 찾는다 — 그 결과 착지
+                        // 지점을 못 찾고 속도만 계속 쌓이다가 뚫고 지나가는 버그가 있었다.
+                        // 발판 모양에 의존하지 않도록, 끼인 지점에서 위로 조금씩 밀어 올려
+                        // 처음으로 안 걸리는 자리에 바로 착지시킨다.
+                        float mult = GameView.MULTIPLIER;
+                        float clearY = y;
+                        RectF probe = new RectF();
+                        for (int i = 0; i < 64; i++) {
+                            clearY -= 2f;
+                            probe.set(x + collisionOffsetRect.left * mult, clearY + collisionOffsetRect.top * mult,
+                                    x + collisionOffsetRect.right * mult, clearY + collisionOffsetRect.bottom * mult);
+                            if (!CollisionDetect(probe)) {
+                                break;
                             }
-                        } else {
-                            separateFromWalls();
+                        }
+                        y = clearY;
+                        velocityY = 0;
+                        Sound.play(R.raw.king_land);
+                        if (!tryStartSlopeSlide(game.frameTime)) {
+                            landOnGround(dx);
                         }
                     }
                 }
@@ -377,8 +387,20 @@ public class Player implements GameObject, BoxCollidable {
                 }
                 float platformTop = findNearestPlatformTop();
                 if ((int) foot < (int) platformTop) {
-                    setState(State.falling);
-                    if (state != State.falling) velocityY = 0;
+                    // findNearestPlatformTop()의 x범위 추정이 항상 맞는 건 아니라서(천장부터
+                    // 길게 이어진 세로 발판 등은 후보에서 아예 빠질 수 있음), 실제로 바로 아래가
+                    // 비어있는지 진짜 충돌로 한 번 더 확인한 다음에만 낙하 상태로 바꾼다.
+                    float mult = GameView.MULTIPLIER;
+                    RectF probe = new RectF(
+                            x + collisionOffsetRect.left * mult,
+                            y + collisionOffsetRect.top * mult + 3f,
+                            x + collisionOffsetRect.right * mult,
+                            y + collisionOffsetRect.bottom * mult + 3f
+                    );
+                    if (!CollisionDetect(probe)) {
+                        setState(State.falling);
+                        velocityY = 0;
+                    }
                 }
             }
         }
@@ -441,7 +463,9 @@ public class Player implements GameObject, BoxCollidable {
     private Platform findNearestPlatformAt(float px, float py) {
         ArrayList<GameObject> platforms = MainScene.scene.objectsAt(MainScene.Layer.platform);
         float top = GameView.gameHeight;
-        float offset = 5;
+        // 계단식 발판의 턱/모서리에서 바로 아래 발판을 못 찾고 화면 바닥까지 낙하 대상으로
+        // 잡아버리는 문제가 있어서, 콜리전 박스와 같은 배율로 여유를 넓혔다.
+        float offset = 5f * GameView.MULTIPLIER;
         Platform nearest = null;
         for (GameObject obj : platforms) {
             Platform platform = (Platform) obj;
@@ -532,18 +556,20 @@ public class Player implements GameObject, BoxCollidable {
     }
 
     boolean CollisionDetect(RectF rect) {
-        MainGame game = (MainGame) MainGame.get();
-        ArrayList<GameObject> platforms = MainScene.scene.objectsAt(MainScene.Layer.platform);
-        float top = GameView.gameHeight;
-        for (GameObject obj : platforms) {
-                Platform platform = (Platform) obj;
-                RectF rect2 = platform.getBoundingRect();
-                if (rect.right < rect2.left || rect.left > rect2.right) continue;
-                if (rect.bottom <= rect2.top || rect.top >= rect2.bottom) continue;
+        return findCollidingPlatform(rect) != null;
+    }
 
-                return true;
+    /** rect와 실제로 겹치는 발판을 직접 찾는다 (findNearestPlatformTop과 달리 x/y 근처 추정이 아니라 진짜 충돌 판정). */
+    private Platform findCollidingPlatform(RectF rect) {
+        ArrayList<GameObject> platforms = MainScene.scene.objectsAt(MainScene.Layer.platform);
+        for (GameObject obj : platforms) {
+            Platform platform = (Platform) obj;
+            RectF rect2 = platform.getBoundingRect();
+            if (rect.right < rect2.left || rect.left > rect2.right) continue;
+            if (rect.bottom <= rect2.top || rect.top >= rect2.bottom) continue;
+            return platform;
         }
-        return false;
+        return null;
     }
 
 
