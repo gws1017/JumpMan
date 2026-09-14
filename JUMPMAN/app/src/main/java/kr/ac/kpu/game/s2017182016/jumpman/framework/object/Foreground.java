@@ -29,7 +29,7 @@ public class Foreground implements GameObject {
         } else {
             srcRect.set(0, 0, bmp.getWidth(), bmp.getHeight());
         }
-        dstRect.set(0, 0, GameView.view.getWidth(), GameView.view.getHeight());
+        dstRect.set(0, 0, GameView.gameWidth, GameView.gameHeight);
     }
 
     @Override

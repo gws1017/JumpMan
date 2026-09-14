@@ -20,6 +20,7 @@ public class GameSettings {
     private PadMode padMode = PadMode.DPAD;
     private boolean cheatEnabled = false;
     private boolean showCollision = false;
+    private boolean assistMode = false;
     private float bgmVolume = 1f;
     private float sfxVolume = 1f;
 
@@ -47,6 +48,7 @@ public class GameSettings {
         }
         cheatEnabled = prefs.getBoolean("cheatEnabled", false);
         showCollision = prefs.getBoolean("showCollision", false);
+        assistMode = prefs.getBoolean("assistMode", false);
         bgmVolume = clamp01(prefs.getFloat("bgmVolume", 1f));
         sfxVolume = clamp01(prefs.getFloat("sfxVolume", 1f));
     }
@@ -56,6 +58,7 @@ public class GameSettings {
                 .putString("padMode", padMode.name())
                 .putBoolean("cheatEnabled", cheatEnabled)
                 .putBoolean("showCollision", showCollision)
+                .putBoolean("assistMode", assistMode)
                 .putFloat("bgmVolume", bgmVolume)
                 .putFloat("sfxVolume", sfxVolume)
                 .apply();
@@ -91,6 +94,15 @@ public class GameSettings {
 
     public void setShowCollision(boolean showCollision) {
         this.showCollision = showCollision;
+        save();
+    }
+
+    public boolean isAssistModeEnabled() {
+        return assistMode;
+    }
+
+    public void setAssistModeEnabled(boolean assistMode) {
+        this.assistMode = assistMode;
         save();
     }
 

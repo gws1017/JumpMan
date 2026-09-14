@@ -9,8 +9,8 @@ import kr.ac.kpu.game.s2017182016.jumpman.framework.view.GameView;
 import kr.ac.kpu.game.s2017182016.jumpman.game.scenes.main.MainScene;
 
 public class StageMap implements GameObject {
-    private final int viewWidth = GameView.view.getWidth();
-    private final int viewHeight = GameView.view.getHeight();
+    private final int viewWidth = GameView.gameWidth;
+    private final int viewHeight = GameView.gameHeight;
     private final int imageWidth = LevelMaskParser.LOGICAL_W;
     private final int imageHeight = LevelMaskParser.LOGICAL_H;
 

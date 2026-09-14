@@ -39,8 +39,8 @@ public class TitleScene extends Scene {
         scene = this;
         starting = false;
         super.start();
-        int w = GameView.view.getWidth();
-        int h = GameView.view.getHeight();
+        int w = GameView.gameWidth;
+        int h = GameView.gameHeight;
         int iw = 480;
         int ih = 350;
         titleBgm = MediaPlayer.create(GameView.view.getContext(), R.raw.menu_intro);
@@ -163,8 +163,8 @@ public class TitleScene extends Scene {
 
         @Override
         public void draw(Canvas canvas) {
-            float w = GameView.view.getWidth();
-            float h = GameView.view.getHeight();
+            float w = GameView.gameWidth;
+            float h = GameView.gameHeight;
             paint.setTextSize(h * 0.035f);
             canvas.drawText("화면을 눌러 시작  ·  우측 상단 옵션", w / 2f, h * 0.92f, paint);
         }

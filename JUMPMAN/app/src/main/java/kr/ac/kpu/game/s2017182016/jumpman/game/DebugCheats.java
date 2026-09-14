@@ -42,8 +42,8 @@ public class DebugCheats implements GameObject {
     }
 
     public void layout() {
-        float w = GameView.view.getWidth();
-        float h = GameView.view.getHeight();
+        float w = GameView.gameWidth;
+        float h = GameView.gameHeight;
         float bw = w * 0.12f;
         float bh = h * 0.12f;
         float m = h * 0.03f;

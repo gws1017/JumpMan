@@ -58,6 +58,7 @@ public class OptionsScene extends Scene {
         private final RectF dpadBtn = new RectF();
         private final RectF cheatBtn = new RectF();
         private final RectF collBtn = new RectF();
+        private final RectF assistBtn = new RectF();
         private final RectF bgmMinus = new RectF();
         private final RectF bgmPlus = new RectF();
         private final RectF sfxMinus = new RectF();
@@ -82,8 +83,8 @@ public class OptionsScene extends Scene {
         }
 
         private void layout() {
-            float w = GameView.view.getWidth();
-            float h = GameView.view.getHeight();
+            float w = GameView.gameWidth;
+            float h = GameView.gameHeight;
             float pw = w * 0.82f;
             float ph = h * 0.90f;
             panelRect.set((w - pw) / 2f, (h - ph) / 2f, (w + pw) / 2f, (h + ph) / 2f);
@@ -104,6 +105,9 @@ public class OptionsScene extends Scene {
             cheatBtn.set(left, y, right, y + rowH);
             y += rowH + gap;
             collBtn.set(left, y, right, y + rowH);
+            y += rowH + sectionGap;
+
+            assistBtn.set(left, y, right, y + rowH);
             y += rowH + sectionGap;
 
             float sq = rowH;
@@ -138,6 +142,10 @@ public class OptionsScene extends Scene {
             }
             if (collBtn.contains(x, y)) {
                 s.setShowCollision(!s.isShowCollision());
+                return true;
+            }
+            if (assistBtn.contains(x, y)) {
+                s.setAssistModeEnabled(!s.isAssistModeEnabled());
                 return true;
             }
             if (bgmMinus.contains(x, y)) {
@@ -189,7 +197,7 @@ public class OptionsScene extends Scene {
         public void draw(Canvas canvas) {
             layout();
             GameSettings s = GameSettings.get();
-            canvas.drawRect(0, 0, GameView.view.getWidth(), GameView.view.getHeight(), dimPaint);
+            canvas.drawRect(0, 0, GameView.gameWidth, GameView.gameHeight, dimPaint);
             float r = 18f;
             canvas.drawRoundRect(panelRect, r, r, panelPaint);
             canvas.drawRoundRect(panelRect, r, r, borderPaint);
@@ -206,6 +214,10 @@ public class OptionsScene extends Scene {
                     cheatBtn.top - textPaint.getTextSize() * 0.4f, textPaint);
             drawToggle(canvas, cheatBtn, "치트키  " + onOff(s.isCheatEnabled()), s.isCheatEnabled());
             drawToggle(canvas, collBtn, "콜리전 박스  " + onOff(s.isShowCollision()), s.isShowCollision());
+
+            canvas.drawText("보조", panelRect.centerX(),
+                    assistBtn.top - textPaint.getTextSize() * 0.4f, textPaint);
+            drawToggle(canvas, assistBtn, "점프 게이지/궤적  " + onOff(s.isAssistModeEnabled()), s.isAssistModeEnabled());
 
             drawVolumeRow(canvas, bgmMinus, bgmPlus, "배경음", s.getBgmVolume());
             drawVolumeRow(canvas, sfxMinus, sfxPlus, "효과음", s.getSfxVolume());

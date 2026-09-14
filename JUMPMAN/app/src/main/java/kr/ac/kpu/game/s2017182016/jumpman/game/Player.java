@@ -17,6 +17,7 @@ import kr.ac.kpu.game.s2017182016.jumpman.framework.iface.GameObject;
 import kr.ac.kpu.game.s2017182016.jumpman.framework.bitmap.IndexedAnimationGameBitmap;
 import kr.ac.kpu.game.s2017182016.jumpman.framework.object.Foreground;
 import kr.ac.kpu.game.s2017182016.jumpman.framework.object.Midground;
+import kr.ac.kpu.game.s2017182016.jumpman.framework.util.GameSettings;
 import kr.ac.kpu.game.s2017182016.jumpman.framework.util.Sound;
 import kr.ac.kpu.game.s2017182016.jumpman.framework.view.GameView;
 import kr.ac.kpu.game.s2017182016.jumpman.framework.view.Joystick;
@@ -26,17 +27,24 @@ import kr.ac.kpu.game.s2017182016.jumpman.game.scenes.main.MainScene;
 
 public class Player implements GameObject, BoxCollidable {
 
-    private static final float MAX_SPEED = 300.0f*GameView.view.getWidth()/2200;
-    private static final float SLOPE_SLIDE_SPEED = 420.0f * GameView.view.getWidth() / 2200;
+    private static final float MAX_SPEED = 300.0f*GameView.gameWidth/2200;
+    private static final float SLOPE_SLIDE_SPEED = 420.0f * GameView.gameWidth / 2200;
     /** 얼음 위 가속/감속 스무딩 계수 (초당 목표속도에 도달하는 비율, 클수록 덜 미끄러짐) */
     private static final float ICE_SMOOTH_RATE = 4f;
+    /** 디버깅: 치트키 ON일 때 차징 속도 배율 (원하는 세기에서 정확히 떼기 쉽게 느리게) */
+    private static final float DEBUG_CHARGE_SLOWDOWN = 0.15f;
+    /** 가로 점프력 곡선의 급증 구간 비율(충전량 기준)과 그 지점에서의 배율. xJumpPowerForCharge 참고. */
+    private static final float X_RAMP_FRACTION = 0.3f;
+    private static final float X_RAMP_BOOST = 2.4f;
     private static final String TAG = Player.class.getSimpleName();
-    private static final float JUMPPOWERY = 30;
+    // 30 → 36: 최대 충전 시 도달 높이가 실제 필요 높이랑 거의 정확히 같아서(여유 0%,
+    // 화면3 등에서 확실히 닿아야 할 지점을 못 넘고 모서리에 튕기는 문제) 여유를 두기 위해 상향.
+    private static final float JUMPPOWERY = 36;
     private static final float JUMPPOWERX = 18;
     /** 조이스틱을 위로 당긴 정도로 제자리 점프 판정 */
     private static final float JOYSTICK_UP_THRESHOLD = -0.4f;
-    private static final float GRAVITY = GameView.view.getHeight()*2050/1003;
-    public static final int MAX_JUMPPOWER = GameView.view.getHeight()*43/1003;
+    private static final float GRAVITY = GameView.gameHeight*2050/1003;
+    public static final int MAX_JUMPPOWER = GameView.gameHeight*43/1003;
     private final Background bg;
     private final Midground mg;
     private final Foreground fg;
@@ -211,10 +219,12 @@ public class Player implements GameObject, BoxCollidable {
                 isInverse = face;
                 setState(State.ready);
             }
-            chargetime += 60 * game.frameTime * GameView.view.getHeight() / 1003;
+            // 보조모드: 원하는 차징 지점에서 정확히 뗄 수 있도록 차징 속도를 늦춰준다
+            float chargeSpeedScale = isAssistModeOn() ? DEBUG_CHARGE_SLOWDOWN : 1f;
+            chargetime += 60 * game.frameTime * GameView.gameHeight / 1003 * chargeSpeedScale;
             if (chargetime > MAX_JUMPPOWER) {
-                if (DebugCheats.isActive()) {
-                    // 디버깅: 꽉 차도 자동 점프하지 않고 게이지/궤적을 계속 볼 수 있게 유지, 손 뗄 때만 점프
+                if (isAssistModeOn()) {
+                    // 보조모드: 꽉 차도 자동 점프하지 않고 게이지/궤적을 계속 볼 수 있게 유지, 손 뗄 때만 점프
                     chargetime = MAX_JUMPPOWER;
                     return;
                 }
@@ -243,8 +253,8 @@ public class Player implements GameObject, BoxCollidable {
             // --- X axis: move, then resolve. Bounce only when we hit while moving into a wall. ---
             float prevX = x;
             x += directionX * dx;
-            float leftBound = 8f * GameView.view.getWidth() / 480f + playerWidth;
-            float rightBound = 472f * GameView.view.getWidth() / 480f - playerWidth;
+            float leftBound = 8f * GameView.gameWidth / 480f + playerWidth;
+            float rightBound = 472f * GameView.gameWidth / 480f - playerWidth;
             if (x < leftBound) x = leftBound;
             if (x > rightBound) x = rightBound;
 
@@ -356,14 +366,14 @@ public class Player implements GameObject, BoxCollidable {
         // 맵 이동 (level.png 스크린 단위)
         if (y < 0) {
             if (!mg.isLast()) {
-                y = GameView.view.getHeight() - 30 * GameView.view.getHeight() / 360;
+                y = GameView.gameHeight - 30 * GameView.gameHeight / 360;
                 bg.nextimg();
                 mg.nextimg();
                 fg.nextimg();
                 clearPlatforms(scene);
                 scene.add(MainScene.Layer.controller, new StageMap(mg.num));
             }
-        } else if (y >= GameView.view.getHeight() - 30 * GameView.view.getHeight() / 360) {
+        } else if (y >= GameView.gameHeight - 30 * GameView.gameHeight / 360) {
             if (!mg.isFirst()) {
                 y = 10;
                 bg.previmg();
@@ -402,14 +412,14 @@ public class Player implements GameObject, BoxCollidable {
     private float findPlatformTopAt(float px, float py) {
         Platform platform = findNearestPlatformAt(px, py);
         if (platform == null) {
-            return GameView.view.getHeight() - 3;
+            return GameView.gameHeight - 3;
         }
         return platform.getBoundingRect().top - 3;
     }
 
     private Platform findNearestPlatformAt(float px, float py) {
         ArrayList<GameObject> platforms = MainScene.scene.objectsAt(MainScene.Layer.platform);
-        float top = GameView.view.getHeight();
+        float top = GameView.gameHeight;
         float offset = 5;
         Platform nearest = null;
         for (GameObject obj : platforms) {
@@ -503,7 +513,7 @@ public class Player implements GameObject, BoxCollidable {
     boolean CollisionDetect(RectF rect) {
         MainGame game = (MainGame) MainGame.get();
         ArrayList<GameObject> platforms = MainScene.scene.objectsAt(MainScene.Layer.platform);
-        float top = GameView.view.getHeight();
+        float top = GameView.gameHeight;
         for (GameObject obj : platforms) {
                 Platform platform = (Platform) obj;
                 RectF rect2 = platform.getBoundingRect();
@@ -520,7 +530,7 @@ public class Player implements GameObject, BoxCollidable {
     private float CollisionDetectY(RectF rect) {
         MainGame game = (MainGame) MainGame.get();
         ArrayList<GameObject> platforms = MainScene.scene.objectsAt(MainScene.Layer.platform);
-        float top = GameView.view.getHeight();
+        float top = GameView.gameHeight;
         for (GameObject obj : platforms) {
             Platform platform = (Platform) obj;
             RectF rect2 = platform.getBoundingRect();
@@ -547,9 +557,13 @@ public class Player implements GameObject, BoxCollidable {
 
         }
 
-        if (DebugCheats.isActive()) {
+        if (isAssistModeOn()) {
             drawJumpDebug(canvas);
         }
+    }
+
+    private static boolean isAssistModeOn() {
+        return GameSettings.get() != null && GameSettings.get().isAssistModeEnabled();
     }
 
     private void drawJumpDebug(Canvas canvas) {
@@ -558,15 +572,7 @@ public class Player implements GameObject, BoxCollidable {
             float previewCharge = Math.min(chargetime, MAX_JUMPPOWER);
             int dir = isInverse == 0 ? 1 : isInverse;
             boolean vertical = wantsVerticalJump();
-            double previewJumpX;
-            if (vertical) {
-                previewJumpX = 0;
-            } else {
-                previewJumpX = JUMPPOWERX * previewCharge;
-                if (MAX_JUMPPOWER * 0.6 > previewCharge) {
-                    previewJumpX *= 1.8;
-                }
-            }
+            double previewJumpX = vertical ? 0 : xJumpPowerForCharge(previewCharge);
             simulateAndDrawTrajectory(canvas, -JUMPPOWERY * previewCharge, previewJumpX, dir, false);
         } else if (state == State.jump || state == State.falling) {
             simulateAndDrawTrajectory(canvas, (float) velocityY, jumpX, directionX, state == State.falling);
@@ -595,9 +601,9 @@ public class Player implements GameObject, BoxCollidable {
     /** 현재 발사 조건으로 착지 지점까지 궤적을 시뮬레이션해 점선+착지 마커로 그린다. */
     private void simulateAndDrawTrajectory(Canvas canvas, float launchVelY, double launchJumpX, int launchDir, boolean startFalling) {
         float mult = GameView.MULTIPLIER;
-        float leftBound = 8f * GameView.view.getWidth() / 480f + playerWidth;
-        float rightBound = 472f * GameView.view.getWidth() / 480f - playerWidth;
-        float screenBottom = GameView.view.getHeight() - 30f * GameView.view.getHeight() / 360f;
+        float leftBound = 8f * GameView.gameWidth / 480f + playerWidth;
+        float rightBound = 472f * GameView.gameWidth / 480f - playerWidth;
+        float screenBottom = GameView.gameHeight - 30f * GameView.gameHeight / 360f;
         float dt = 1f / 60f;
         int maxSteps = 180;
 
@@ -712,8 +718,8 @@ public class Player implements GameObject, BoxCollidable {
     }
 
     public void resetSpawn() {
-        x = GameView.view.getWidth() / 2f;
-        y = GameView.view.getHeight() - 80f * GameView.view.getHeight() / 360f;
+        x = GameView.gameWidth / 2f;
+        y = GameView.gameHeight - 80f * GameView.gameHeight / 360f;
         velocityX = 0;
         velocityY = 0;
         jumpX = 0;
@@ -734,13 +740,28 @@ public class Player implements GameObject, BoxCollidable {
             if (wantsVerticalJump()) {
                 jumpX = 0;
             } else {
-                jumpX = JUMPPOWERX * this.chargetime;
-                if (MAX_JUMPPOWER * 0.6 > chargetime) {
-                    jumpX *= 1.8;
-                }
+                jumpX = xJumpPowerForCharge(this.chargetime);
             }
             this.prevchargetime = this.chargetime;
             this.chargetime = 0;
         }
+    }
+
+    /**
+     * 가로 점프력 곡선: 0~30% 충전까지는 급격히 늘어나 X_RAMP_BOOST 배 지점까지 도달하고,
+     * 그 이후 100%까지는 완만하게 (충전량에 선형으로) 최대치까지 늘어난다.
+     * 그냥 선형으로만 스케일하면 "가깝고 높은" 점프(고충전)와 "멀고 낮은" 점프(저충전)의
+     * 요구 조건이 서로 상충해서 둘 다 만족하는 값이 없었음 — 짧게 눌러도 멀리 나가게 하고,
+     * 오래 눌렀을 때는 가로거리보다 세로(Y)만 더 늘도록 분리한 것.
+     */
+    private static float xJumpPowerForCharge(float chargetime) {
+        float rampCap = MAX_JUMPPOWER * X_RAMP_FRACTION;
+        float peakX = JUMPPOWERX * rampCap * X_RAMP_BOOST;
+        if (chargetime <= rampCap) {
+            return peakX * (chargetime / rampCap);
+        }
+        float fullLinear = JUMPPOWERX * MAX_JUMPPOWER;
+        float frac = (chargetime - rampCap) / (MAX_JUMPPOWER - rampCap);
+        return peakX + (fullLinear - peakX) * frac;
     }
 }

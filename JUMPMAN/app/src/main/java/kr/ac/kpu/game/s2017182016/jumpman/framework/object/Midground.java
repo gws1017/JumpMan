@@ -32,7 +32,7 @@ public class Midground implements GameObject {
         if (fromMipmap) {
             mgbitmap = GameBitmap.load(resId);
             srcRect.set(0, 0, mgbitmap.getWidth(), mgbitmap.getHeight());
-            dstRect.set(0, 0, GameView.view.getWidth(), GameView.view.getHeight());
+            dstRect.set(0, 0, GameView.gameWidth, GameView.gameHeight);
         } else {
             this.num = resId;
             loadCurrent();
@@ -47,7 +47,7 @@ public class Midground implements GameObject {
         } else {
             srcRect.set(0, 0, bmp.getWidth(), bmp.getHeight());
         }
-        dstRect.set(0, 0, GameView.view.getWidth(), GameView.view.getHeight());
+        dstRect.set(0, 0, GameView.gameWidth, GameView.gameHeight);
     }
 
     @Override

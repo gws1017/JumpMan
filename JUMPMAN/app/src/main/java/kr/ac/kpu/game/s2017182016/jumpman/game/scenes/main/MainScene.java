@@ -61,8 +61,8 @@ public class MainScene extends Scene {
         scene = this;
         super.start();
 
-        int w = GameView.view.getWidth();
-        int h = GameView.view.getHeight();
+        int w = GameView.gameWidth;
+        int h = GameView.gameHeight;
         initLayers(Layer.LAYER_COUNT.ordinal());
         openingBgm = MediaPlayer.create(GameView.view.getContext(), R.raw.opening_theme);
         forestBgm = MediaPlayer.create(GameView.view.getContext(), R.raw.nb_troll_forest);
