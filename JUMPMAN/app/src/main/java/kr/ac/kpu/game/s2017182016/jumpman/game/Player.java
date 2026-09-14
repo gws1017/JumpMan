@@ -28,6 +28,8 @@ public class Player implements GameObject, BoxCollidable {
 
     private static final float MAX_SPEED = 300.0f*GameView.view.getWidth()/2200;
     private static final float SLOPE_SLIDE_SPEED = 420.0f * GameView.view.getWidth() / 2200;
+    /** 얼음 위 가속/감속 스무딩 계수 (초당 목표속도에 도달하는 비율, 클수록 덜 미끄러짐) */
+    private static final float ICE_SMOOTH_RATE = 4f;
     private static final String TAG = Player.class.getSimpleName();
     private static final float JUMPPOWERY = 30;
     private static final float JUMPPOWERX = 18;
@@ -273,7 +275,7 @@ public class Player implements GameObject, BoxCollidable {
                 velocityY = 0;
                 Sound.play(R.raw.king_land);
                 if (!tryStartSlopeSlide(game.frameTime)) {
-                    setState(State.idle);
+                    landOnGround(dx);
                 }
             } else {
                 y += dy;
@@ -296,7 +298,7 @@ public class Player implements GameObject, BoxCollidable {
                             velocityY = 0;
                             Sound.play(R.raw.king_land);
                             if (!tryStartSlopeSlide(game.frameTime)) {
-                                setState(State.idle);
+                                landOnGround(dx);
                             }
                         } else {
                             separateFromWalls();
@@ -315,10 +317,21 @@ public class Player implements GameObject, BoxCollidable {
             } else {
                 px = x;
                 float moveX = getMoveInputX();
-                velocityX = moveX * MAX_SPEED * game.frameTime;
+                Platform standingOn = findNearestPlatform();
+                float targetVelX = moveX * MAX_SPEED * game.frameTime;
+                if (standingOn != null && standingOn.isIce()) {
+                    // 얼음: 목표 속도로 서서히 가속/감속 (관성으로 미끄러짐)
+                    float smoothing = Math.min(1f, ICE_SMOOTH_RATE * game.frameTime);
+                    velocityX += (targetVelX - velocityX) * smoothing;
+                } else {
+                    velocityX = targetVelX;
+                }
                 x += velocityX;
                 getBoundingRect(collisionRect);
-                if (CollisionDetect(collisionRect)) x = px;
+                if (CollisionDetect(collisionRect)) {
+                    x = px;
+                    velocityX = 0;
+                }
 
                 if (moveX > 0.2f) {
                     isInverse = 1;
@@ -678,6 +691,17 @@ public class Player implements GameObject, BoxCollidable {
         if (state == State.idle || state == State.move) {
             setState(State.ready);
         }
+    }
+
+    /** 착지 처리: 얼음 위라면 방금 비행 중이던 수평 속도를 이어받아 살짝 미끄러지게 한다. */
+    private void landOnGround(float lastFlightDx) {
+        Platform landed = findNearestPlatform();
+        if (landed != null && landed.isIce()) {
+            velocityX = directionX * lastFlightDx;
+        } else {
+            velocityX = 0;
+        }
+        setState(State.idle);
     }
 
     public void cancelReady() {

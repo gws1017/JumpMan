@@ -45,17 +45,20 @@ public class LevelMaskParser {
     private static final int EMPTY = 0;
     private static final int SOLID = 1;
     private static final int SLOPE = 2;
+    private static final int ICE = 3;
 
     public static class MaskPlatform {
         public final Rect rect;
         public final boolean slope;
         /** -1 slide left, +1 slide right */
         public final int slopeDir;
+        public final boolean ice;
 
-        public MaskPlatform(Rect rect, boolean slope, int slopeDir) {
+        public MaskPlatform(Rect rect, boolean slope, int slopeDir, boolean ice) {
             this.rect = rect;
             this.slope = slope;
             this.slopeDir = slopeDir;
+            this.ice = ice;
         }
     }
 
@@ -174,6 +177,7 @@ public class LevelMaskParser {
 
         mergeRects(kind, SOLID, false, result);
         mergeRects(kind, SLOPE, true, result);
+        mergeRects(kind, ICE, false, result);
 
         Log.d(TAG, "Screen " + screenNumber + " → " + result.size() + " platforms");
         return result;
@@ -215,7 +219,7 @@ public class LevelMaskParser {
                         (y2 + 1) * PIXEL_SCALE
                 );
                 int dir = slope ? inferSlopeDir(kind, x, y, x2, y2) : 0;
-                out.add(new MaskPlatform(rect, slope, dir));
+                out.add(new MaskPlatform(rect, slope, dir, target == ICE));
             }
         }
     }
@@ -268,9 +272,10 @@ public class LevelMaskParser {
         if (r <= 40 && g <= 40 && b <= 40) {
             return SOLID;
         }
-        // Workshop palette solids (ice / snow / sand / teal)
+        // Cyan = ice (slippery, no directional bias)
+        if (r == 0 && g == 255 && b == 255) return ICE;
+        // Workshop palette solids (snow / sand / teal)
         if (r == 0 && g == 170 && b == 170) return SOLID;
-        if (r == 0 && g == 255 && b == 255) return SOLID;
         if (r == 255 && g == 255 && b == 0) return SOLID;
         if (r == 255 && g == 255 && b == 255) return SOLID;
         if (r == 255 && g == 106 && b == 0) return SOLID;

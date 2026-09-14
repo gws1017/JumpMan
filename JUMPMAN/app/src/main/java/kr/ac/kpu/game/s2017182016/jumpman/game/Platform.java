@@ -7,7 +7,8 @@ import kr.ac.kpu.game.s2017182016.jumpman.framework.object.ImageObject;
 public class Platform extends ImageObject {
     public enum Kind {
         NORMAL,
-        SLOPE
+        SLOPE,
+        ICE
     }
 
     public final Kind kind;
@@ -29,6 +30,10 @@ public class Platform extends ImageObject {
 
     public boolean isSlope() {
         return kind == Kind.SLOPE;
+    }
+
+    public boolean isIce() {
+        return kind == Kind.ICE;
     }
 
     @Override

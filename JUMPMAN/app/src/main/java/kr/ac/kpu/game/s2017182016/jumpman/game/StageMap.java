@@ -19,12 +19,15 @@ public class StageMap implements GameObject {
 
         List<LevelMaskParser.MaskPlatform> platforms = LevelMaskParser.parseScreen(screenNumber);
         for (LevelMaskParser.MaskPlatform mp : platforms) {
+            Platform.Kind kind = mp.ice ? Platform.Kind.ICE
+                    : mp.slope ? Platform.Kind.SLOPE
+                    : Platform.Kind.NORMAL;
             createObject(
                     mp.rect.left,
                     mp.rect.top,
                     mp.rect.width(),
                     mp.rect.height(),
-                    mp.slope ? Platform.Kind.SLOPE : Platform.Kind.NORMAL,
+                    kind,
                     mp.slopeDir
             );
         }
