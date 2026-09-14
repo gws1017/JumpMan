@@ -91,10 +91,13 @@ public class MainScene extends Scene {
         float padTop = h - (btnH * 2f + gap) - 14f * h / 360f;
         movePad = new LeftRightPad(padLeft, padTop, btnW, btnH, gap);
 
-        int outRadius = Math.round(h / 12f * GameView.MULTIPLIER);
+        // 조이패드 = 십자패드와 같은 중심/영역 (모드만 교체)
+        float padW = movePad.getRight() - movePad.getLeft();
+        float padH = movePad.getBottom() - movePad.getTop();
+        int cx = Math.round((movePad.getLeft() + movePad.getRight()) / 2f);
+        int cy = Math.round((movePad.getTop() + movePad.getBottom()) / 2f);
+        int outRadius = Math.round(Math.min(padW, padH) * 0.48f);
         int inRadius = Math.round(outRadius * 0.42f);
-        int cx = Math.round(padLeft + btnW * 1.5f + gap);
-        int cy = Math.round(padTop - outRadius - 18f * h / 360f);
 
         LevelMaskParser.ensureLoaded(GameView.view.getContext());
         int startScreen = LevelMaskParser.START_SCREEN;
