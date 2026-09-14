@@ -8,7 +8,8 @@ public class Platform extends ImageObject {
     public enum Kind {
         NORMAL,
         SLOPE,
-        ICE
+        ICE,
+        SNOW
     }
 
     public final Kind kind;
@@ -34,6 +35,10 @@ public class Platform extends ImageObject {
 
     public boolean isIce() {
         return kind == Kind.ICE;
+    }
+
+    public boolean isSnow() {
+        return kind == Kind.SNOW;
     }
 
     @Override

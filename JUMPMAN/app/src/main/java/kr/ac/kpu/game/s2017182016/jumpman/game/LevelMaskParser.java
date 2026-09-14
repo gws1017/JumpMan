@@ -46,6 +46,10 @@ public class LevelMaskParser {
     private static final int SOLID = 1;
     private static final int SLOPE = 2;
     private static final int ICE = 3;
+    private static final int SNOW = 4;
+
+    /** 바람 구간을 표시하는 마커 색(초록) 픽셀 수 — 지형이 아니라 화면 전체에 대한 플래그라 콜리전을 만들지 않는다. */
+    private static final int WIND_MARKER_MIN_PIXELS = 20;
 
     public static class MaskPlatform {
         public final Rect rect;
@@ -53,12 +57,14 @@ public class LevelMaskParser {
         /** -1 slide left, +1 slide right */
         public final int slopeDir;
         public final boolean ice;
+        public final boolean snow;
 
-        public MaskPlatform(Rect rect, boolean slope, int slopeDir, boolean ice) {
+        public MaskPlatform(Rect rect, boolean slope, int slopeDir, boolean ice, boolean snow) {
             this.rect = rect;
             this.slope = slope;
             this.slopeDir = slopeDir;
             this.ice = ice;
+            this.snow = snow;
         }
     }
 
@@ -178,6 +184,7 @@ public class LevelMaskParser {
         mergeRects(kind, SOLID, false, result);
         mergeRects(kind, SLOPE, true, result);
         mergeRects(kind, ICE, false, result);
+        mergeRects(kind, SNOW, false, result);
 
         Log.d(TAG, "Screen " + screenNumber + " → " + result.size() + " platforms");
         return result;
@@ -219,7 +226,7 @@ public class LevelMaskParser {
                         (y2 + 1) * PIXEL_SCALE
                 );
                 int dir = slope ? inferSlopeDir(kind, x, y, x2, y2) : 0;
-                out.add(new MaskPlatform(rect, slope, dir, target == ICE));
+                out.add(new MaskPlatform(rect, slope, dir, target == ICE, target == SNOW));
             }
         }
     }
@@ -274,12 +281,43 @@ public class LevelMaskParser {
         }
         // Cyan = ice (slippery, no directional bias)
         if (r == 0 && g == 255 && b == 255) return ICE;
-        // Workshop palette solids (snow / sand / teal)
+        // Yellow = snow-covered ground (slower move/jump charge while standing on it)
+        if (r == 255 && g == 255 && b == 0) return SNOW;
+        // Workshop palette solids (sand / teal)
         if (r == 0 && g == 170 && b == 170) return SOLID;
-        if (r == 255 && g == 255 && b == 0) return SOLID;
         if (r == 255 && g == 255 && b == 255) return SOLID;
         if (r == 255 && g == 106 && b == 0) return SOLID;
 
         return EMPTY;
+    }
+
+    /**
+     * 초록(0,255,0) 마커 픽셀 존재 여부로 "바람(눈보라) 구간" 화면을 판별한다.
+     * 지형이 아니라 화면 전체에 대한 플래그라 콜리전은 만들지 않는다 (classifyPixel에서 EMPTY로 남음).
+     */
+    public static boolean screenHasWind(int screenNumber) {
+        if (levelBitmap == null || screenNumber < 1 || screenNumber > GRID * GRID) {
+            return false;
+        }
+        int col = screenToCol(screenNumber);
+        int row = screenToRow(screenNumber);
+        int originX = col * HITBOX_W;
+        int originY = row * HITBOX_H;
+        int count = 0;
+        for (int y = 0; y < HITBOX_H; y++) {
+            for (int x = 0; x < HITBOX_W; x++) {
+                int pixel = levelBitmap.getPixel(originX + x, originY + y);
+                if (Color.alpha(pixel) < 128) {
+                    continue;
+                }
+                if (Color.red(pixel) == 0 && Color.green(pixel) == 255 && Color.blue(pixel) == 0) {
+                    count++;
+                    if (count >= WIND_MARKER_MIN_PIXELS) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
     }
 }

@@ -20,6 +20,7 @@ public class StageMap implements GameObject {
         List<LevelMaskParser.MaskPlatform> platforms = LevelMaskParser.parseScreen(screenNumber);
         for (LevelMaskParser.MaskPlatform mp : platforms) {
             Platform.Kind kind = mp.ice ? Platform.Kind.ICE
+                    : mp.snow ? Platform.Kind.SNOW
                     : mp.slope ? Platform.Kind.SLOPE
                     : Platform.Kind.NORMAL;
             createObject(
@@ -30,6 +31,11 @@ public class StageMap implements GameObject {
                     kind,
                     mp.slopeDir
             );
+        }
+
+        MainScene mainScene = MainScene.scene;
+        if (mainScene != null) {
+            mainScene.setBlizzardActive(LevelMaskParser.screenHasWind(screenNumber));
         }
 
         if (screenNumber == LevelMaskParser.MAX_SCREEN) {

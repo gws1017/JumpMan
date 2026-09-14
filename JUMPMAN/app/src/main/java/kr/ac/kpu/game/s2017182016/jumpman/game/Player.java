@@ -28,6 +28,13 @@ import kr.ac.kpu.game.s2017182016.jumpman.game.scenes.main.MainScene;
 public class Player implements GameObject, BoxCollidable {
 
     private static final float MAX_SPEED = 300.0f*GameView.gameWidth/2200;
+    /** 눈보라 구간 바람 세기: 제자리(걷기/차징)는 살짝만, 점프 중엔 훨씬 크게 밀려서
+     * 바람 방향으로 점프하면 슈퍼점프처럼 멀리 나가는 원작 느낌을 낸다. */
+    private static final float WIND_PUSH_GROUND = MAX_SPEED * 0.08f;
+    private static final float WIND_PUSH_FLIGHT = MAX_SPEED * 1.1f;
+    /** 눈 쌓인 발판(SNOW) 위에서의 이동속도/점프력 배율. */
+    private static final float SNOW_SPEED_MULTIPLIER = 0.7f;
+    private static final float SNOW_JUMP_MULTIPLIER = 0.85f;
     private static final float SLOPE_SLIDE_SPEED = 420.0f * GameView.gameWidth / 2200;
     /** 얼음 위 가속/감속 스무딩 계수 (초당 목표속도에 도달하는 비율, 클수록 덜 미끄러짐) */
     private static final float ICE_SMOOTH_RATE = 4f;
@@ -72,9 +79,11 @@ public class Player implements GameObject, BoxCollidable {
     private int[] ANIM_INDICES_INV_Jump = {102};
     private int[] ANIM_INDICES_Falling = {102};
     private int[] ANIM_INDICES_INV_Falling = {101};
-    private Rect COL_BOX_OFFSETS_IDLE = new Rect(-15, -12, 15, 15);
+    // 가로 폭을 -15/15 → -9/9로 줄임: 레터박스 도입 후 가로/세로 배율이 일관되게 맞춰지면서
+    // 기존 폭이 좁은 발판/기둥 사이에 캐릭터가 끼어서 못 내려가는 문제가 있었음.
+    private Rect COL_BOX_OFFSETS_IDLE = new Rect(-9, -12, 9, 15);
     private Rect collisionOffsetRect = COL_BOX_OFFSETS_IDLE;
-    private float playerWidth = 35;
+    private float playerWidth = 21;
     private float px;
     private RectF collisionRect = new RectF();
     private int directionX = 1;
@@ -219,6 +228,14 @@ public class Player implements GameObject, BoxCollidable {
                 isInverse = face;
                 setState(State.ready);
             }
+            if (Blizzard.active && !isOnSnow()) {
+                float prevChargeX = x;
+                x += Blizzard.direction * WIND_PUSH_GROUND * game.frameTime;
+                getBoundingRect(collisionRect);
+                if (CollisionDetect(collisionRect)) {
+                    x = prevChargeX;
+                }
+            }
             // 보조모드: 원하는 차징 지점에서 정확히 뗄 수 있도록 차징 속도를 늦춰준다
             float chargeSpeedScale = isAssistModeOn() ? DEBUG_CHARGE_SLOWDOWN : 1f;
             chargetime += 60 * game.frameTime * GameView.gameHeight / 1003 * chargeSpeedScale;
@@ -252,7 +269,8 @@ public class Player implements GameObject, BoxCollidable {
 
             // --- X axis: move, then resolve. Bounce only when we hit while moving into a wall. ---
             float prevX = x;
-            x += directionX * dx;
+            float windPush = Blizzard.active ? Blizzard.direction * WIND_PUSH_FLIGHT * game.frameTime : 0f;
+            x += directionX * dx + windPush;
             float leftBound = 8f * GameView.gameWidth / 480f + playerWidth;
             float rightBound = 472f * GameView.gameWidth / 480f - playerWidth;
             if (x < leftBound) x = leftBound;
@@ -328,7 +346,9 @@ public class Player implements GameObject, BoxCollidable {
                 px = x;
                 float moveX = getMoveInputX();
                 Platform standingOn = findNearestPlatform();
-                float targetVelX = moveX * MAX_SPEED * game.frameTime;
+                boolean onSnow = standingOn != null && standingOn.isSnow();
+                float speedMul = onSnow ? SNOW_SPEED_MULTIPLIER : 1f;
+                float targetVelX = moveX * MAX_SPEED * speedMul * game.frameTime;
                 if (standingOn != null && standingOn.isIce()) {
                     // 얼음: 목표 속도로 서서히 가속/감속 (관성으로 미끄러짐)
                     float smoothing = Math.min(1f, ICE_SMOOTH_RATE * game.frameTime);
@@ -336,7 +356,8 @@ public class Player implements GameObject, BoxCollidable {
                 } else {
                     velocityX = targetVelX;
                 }
-                x += velocityX;
+                float windPush = (Blizzard.active && !onSnow) ? Blizzard.direction * WIND_PUSH_GROUND * game.frameTime : 0f;
+                x += velocityX + windPush;
                 getBoundingRect(collisionRect);
                 if (CollisionDetect(collisionRect)) {
                     x = px;
@@ -699,6 +720,12 @@ public class Player implements GameObject, BoxCollidable {
         }
     }
 
+    /** 지금 서 있는 발판이 눈(SNOW)인지 — 눈 지형에서는 눈보라 밀림 영향을 받지 않는다. */
+    private boolean isOnSnow() {
+        Platform p = findNearestPlatform();
+        return p != null && p.isSnow();
+    }
+
     /** 착지 처리: 얼음 위라면 방금 비행 중이던 수평 속도를 이어받아 살짝 미끄러지게 한다. */
     private void landOnGround(float lastFlightDx) {
         Platform landed = findNearestPlatform();
@@ -733,14 +760,16 @@ public class Player implements GameObject, BoxCollidable {
         if (state == State.ready) {
             Sound.play(R.raw.king_jump);
             setState(State.jump);
-            velocityY = -JUMPPOWERY * this.chargetime;
+            Platform launchPlatform = findNearestPlatform();
+            float snowMul = (launchPlatform != null && launchPlatform.isSnow()) ? SNOW_JUMP_MULTIPLIER : 1f;
+            velocityY = -JUMPPOWERY * this.chargetime * snowMul;
 
             // 기본: 바라보는 방향으로 점프. ▲/조이 위 = 제자리(수직)
             directionX = isInverse == 0 ? 1 : isInverse;
             if (wantsVerticalJump()) {
                 jumpX = 0;
             } else {
-                jumpX = xJumpPowerForCharge(this.chargetime);
+                jumpX = xJumpPowerForCharge(this.chargetime) * snowMul;
             }
             this.prevchargetime = this.chargetime;
             this.chargetime = 0;

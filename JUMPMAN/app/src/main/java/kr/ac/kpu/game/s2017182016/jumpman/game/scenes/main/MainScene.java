@@ -17,6 +17,7 @@ import kr.ac.kpu.game.s2017182016.jumpman.framework.util.GameSettings;
 import kr.ac.kpu.game.s2017182016.jumpman.framework.view.GameView;
 import kr.ac.kpu.game.s2017182016.jumpman.framework.view.Joystick;
 import kr.ac.kpu.game.s2017182016.jumpman.framework.view.LeftRightPad;
+import kr.ac.kpu.game.s2017182016.jumpman.game.Blizzard;
 import kr.ac.kpu.game.s2017182016.jumpman.game.DebugCheats;
 import kr.ac.kpu.game.s2017182016.jumpman.game.LevelMaskParser;
 import kr.ac.kpu.game.s2017182016.jumpman.game.Player;
@@ -34,6 +35,7 @@ public class MainScene extends Scene {
     private LeftRightPad movePad;
     private DebugCheats debugCheats;
     private OptionsEntryButton optionsButton;
+    private Blizzard blizzard;
     private MediaPlayer openingBgm;
     private boolean gestureAllowsJump;
     private int jumpPointerId = -1;
@@ -196,6 +198,18 @@ public class MainScene extends Scene {
                 mp.pause();
             }
         } catch (IllegalStateException ignored) {
+        }
+    }
+
+    /** 바람(눈보라) 구간 진입/이탈에 맞춰 이펙트 GameObject를 붙였다 뗀다. */
+    public void setBlizzardActive(boolean active) {
+        if (active && blizzard == null) {
+            blizzard = new Blizzard();
+            add(Layer.fg, blizzard);
+        } else if (!active && blizzard != null) {
+            remove(blizzard, false);
+            blizzard = null;
+            Blizzard.deactivate();
         }
     }
 
